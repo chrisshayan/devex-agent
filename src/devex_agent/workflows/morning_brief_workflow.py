@@ -15,6 +15,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from .code_analyzer import CodeAnalyzer
+from .enhanced_code_analyzer import run_enhanced_analysis
 from ..config.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -127,8 +128,8 @@ class MorningBriefWorkflow:
         return new_state
     
     async def code_analysis_node(self, state: MorningBriefState) -> MorningBriefState:
-        """Node 2: Deep code analysis using AI"""
-        logger.info("🧠 Node 2: Performing code analysis...")
+        """Node 2: Deep code analysis using enhanced real-world tools"""
+        logger.info("🧠 Node 2: Performing enhanced code analysis...")
         
         # Ensure we have a valid state
         if state is None:
@@ -137,17 +138,37 @@ class MorningBriefWorkflow:
         event_categories = state.get("event_categories", {})
         file_changes = event_categories.get("file_changes", [])
         
-        # Perform sophisticated code analysis
-        code_analysis = await self.code_analyzer.analyze_code_changes(file_changes)
+        # Run enhanced analysis with real security and quality tools
+        try:
+            enhanced_analysis = await run_enhanced_analysis(str(self.settings.project_root if hasattr(self.settings, 'project_root') else "."))
+            
+            # Format the analysis results to match expected structure
+            code_analysis = {
+                "total_files": enhanced_analysis.get("total_files_analyzed", 0),
+                "languages_detected": enhanced_analysis.get("languages_detected", []),
+                "security_issues": enhanced_analysis.get("security_issues", []),
+                "quality_issues": enhanced_analysis.get("quality_issues", []),
+                "analysis_tools_used": enhanced_analysis.get("analysis_tools_used", []),
+                "security_concerns": enhanced_analysis.get("security_issues", []),  # For backward compatibility
+                "suggestions": []  # Will be populated in insights node
+            }
+            
+            logger.info(f"🔍 Enhanced analysis found {len(code_analysis['security_issues'])} security issues and {len(code_analysis['quality_issues'])} quality issues")
         
-        # Analyze build patterns
+        except Exception as e:
+            logger.error(f"Enhanced analysis failed, falling back to basic analysis: {e}")
+            # Fallback to original analysis
+            code_analysis = await self.code_analyzer.analyze_code_changes(file_changes)
+        
+        # Analyze build patterns (keep existing logic)
         build_events = event_categories.get("build_events", [])
         build_analysis = await self.code_analyzer.analyze_build_patterns(build_events)
         
         # Add analysis message
+        total_issues = len(code_analysis.get('security_issues', [])) + len(code_analysis.get('quality_issues', []))
         analysis_msg = AIMessage(
-            content=f"Code analysis complete: {code_analysis.get('total_files', 0)} files analyzed, "
-                   f"{len(code_analysis.get('quality_issues', []))} quality issues found"
+            content=f"Enhanced code analysis complete: {code_analysis.get('total_files', 0)} files analyzed, "
+                   f"{total_issues} total issues found using {len(code_analysis.get('analysis_tools_used', []))} tools"
         )
         
         # Return new state
@@ -267,18 +288,25 @@ class MorningBriefWorkflow:
         pattern_analysis = state.get("pattern_analysis", {})
         event_stats = state.get("event_stats", {})
         
-        # Generate critical insights
+        # Generate critical insights with detailed file information
         critical_insights = []
         
-        # High-priority issues
-        if code_analysis.get("security_concerns"):
-            critical_insights.append({
-                "type": "security",
-                "priority": "critical",
-                "title": "Security concerns detected",
-                "description": f"Found {len(code_analysis['security_concerns'])} potential security issues",
-                "action_required": True
-            })
+        # Security issues with file details
+        security_issues = code_analysis.get("security_issues", [])
+        if security_issues:
+            # Group by severity to determine priority
+            critical_security = [i for i in security_issues if i.get("severity") in ["critical", "high"]]
+            
+            if critical_security:
+                critical_insights.append({
+                    "type": "security",
+                    "priority": "critical",
+                    "title": "Security concerns detected",
+                    "description": f"Found {len(security_issues)} potential security issues",
+                    "action_required": True,
+                    "count": len(security_issues),
+                    "files": security_issues  # Include all file details
+                })
         
         # Build failures
         build_analysis = state.get("build_analysis", {})
@@ -288,33 +316,67 @@ class MorningBriefWorkflow:
                 "priority": "high",
                 "title": f"{build_analysis['failed_builds']} build failures",
                 "description": "Recent builds have failed and may block progress",
-                "action_required": True
+                "action_required": True,
+                "count": build_analysis.get("failed_builds", 0),
+                "files": []  # Could add build log file paths if available
             })
         
-        # Quality issues
-        if code_analysis.get("quality_issues"):
-            critical_insights.append({
-                "type": "code_quality",
-                "priority": "medium",
-                "title": "Code quality attention needed",
-                "description": f"Identified {len(code_analysis['quality_issues'])} quality concerns",
-                "action_required": False
-            })
+        # Quality issues with file details
+        quality_issues = code_analysis.get("quality_issues", [])
+        if quality_issues:
+            # Group by severity
+            high_quality_issues = [i for i in quality_issues if i.get("severity") in ["high", "medium"]]
+            
+            if high_quality_issues:
+                critical_insights.append({
+                    "type": "code_quality",
+                    "priority": "medium",
+                    "title": "Code quality attention needed",
+                    "description": f"Identified {len(quality_issues)} quality concerns",
+                    "action_required": False,
+                    "count": len(quality_issues),
+                    "files": quality_issues  # Include all file details
+                })
         
-        # Generate suggestions from all sources
+        # Generate suggestions with enhanced file details
         suggestions = []
         
-        # From code analysis
-        suggestions.extend(code_analysis.get("suggestions", []))
+        # From security analysis
+        if security_issues:
+            security_files = [i for i in security_issues if i.get("severity") in ["medium", "low"]]
+            if security_files:
+                suggestions.append({
+                    "type": "security",
+                    "title": "Review security implications",
+                    "description": f"Identified {len(security_issues)} security considerations",
+                    "priority": "high",
+                    "action": "security_review",
+                    "files": security_files
+                })
+        
+        # From quality analysis  
+        if quality_issues:
+            quality_files = [i for i in quality_issues if i.get("severity") in ["low", "medium"]]
+            if quality_files:
+                suggestions.append({
+                    "type": "quality",
+                    "title": "Address code quality issues",
+                    "description": f"Found {len(quality_issues)} potential quality concerns",
+                    "priority": "medium",
+                    "action": "quality_review",
+                    "files": quality_files
+                })
         
         # From pattern analysis
         pattern_recommendations = pattern_analysis.get("recommendations", [])
         for rec in pattern_recommendations:
             suggestions.append({
                 "type": "pattern_based",
-                "title": rec.get("title", "Pattern-based suggestion"),
-                "description": rec.get("description", "Based on detected patterns"),
-                "priority": rec.get("priority", "medium")
+                "title": rec.get("title", "LLM Recommendation"),
+                "description": rec.get("description", "Based on pattern analysis"),
+                "priority": rec.get("priority", "medium"),
+                "action": None,
+                "files": []
             })
         
         # Activity-based suggestions
@@ -324,14 +386,18 @@ class MorningBriefWorkflow:
                 "type": "productivity",
                 "title": "Low activity detected",
                 "description": "Consider setting small, achievable development goals",
-                "priority": "low"
+                "priority": "low",
+                "action": None,
+                "files": []
             })
         elif activity_score > 8:
             suggestions.append({
                 "type": "wellness",
                 "title": "High activity - remember work-life balance",
                 "description": "Great productivity! Don't forget to take breaks",
-                "priority": "low"
+                "priority": "low",
+                "action": None,
+                "files": []
             })
         
         insights_msg = AIMessage(

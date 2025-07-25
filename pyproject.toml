@@ -1,41 +1,42 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
+[tool.poetry]
 name = "devex-agent"
 version = "0.1.0"
-description = "Ambient DevEx Assistant for enhanced developer experience"
-authors = [{name = "DevEx Team"}]
-dependencies = [
-    "fastapi[all]>=0.104.0",
-    "langgraph>=0.2.0",
-    "langchain>=0.3.0",
-    "langchain-openai>=0.2.0",
-    "langchain-community>=0.3.0",
-    "langchain-chroma>=0.1.0",
-    "chromadb>=0.4.0",
-    "pydantic>=2.0.0",
-    "httpx>=0.25.0",
-    "python-multipart>=0.0.6",
-    "uvicorn[standard]>=0.24.0",
-    "tiktoken>=0.5.0",
-    "numpy>=1.24.0",
-    "sentence-transformers>=2.2.0",
-    "tree-sitter>=0.20.0",
-    "tree-sitter-python>=0.20.0",
-    "tree-sitter-javascript>=0.20.0",
-    "tree-sitter-java>=0.20.0",
-    "ast-tools>=0.1.0",
-    "pygments>=2.15.0"
-]
+description = "DevEx Ambient Agent for intelligent developer experience"
+authors = ["Your Name <you@example.com>"]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "mypy>=1.5.0"
-]
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0"
+pydantic = "^2.5.0"
+httpx = "^0.25.2"
+python-multipart = "^0.0.6"
+watchdog = "^3.0.0"
+gitpython = "^3.1.40"
+psutil = "^5.9.6"
+langchain = "^0.1.0"
+langchain-openai = "^0.0.5"
+langchain-community = "^0.0.13"
+langchain-chroma = "^0.1.0"
+langgraph = "^0.0.26"
+# Security analysis tools
+bandit = "^1.7.5"
+safety = "^2.3.5"
+semgrep = "^1.45.0"
+# Code quality analysis tools
+pylint = "^3.0.3"
+flake8 = "^6.1.0"
+mypy = "^1.7.1"
+black = "^23.11.0"
+isort = "^5.12.0"
+# Additional analysis
+vulture = "^2.10"  # Dead code detection
+radon = "^6.0.1"   # Complexity analysis
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
