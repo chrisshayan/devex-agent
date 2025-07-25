@@ -164,8 +164,8 @@ class AmbientAgentService : Disposable {
                                 greeting = briefData["greeting"] as? String,
                                 summary = briefData["summary"] as? String ?: "",
                                 activityOverview = briefData["activity_overview"] as? Map<String, Any> ?: emptyMap(),
-                                criticalItems = briefData["critical_items"] as? List<Map<String, Any>> ?: emptyList(),
-                                suggestions = briefData["suggestions"] as? List<Map<String, Any>> ?: emptyList(),
+                                criticalItems = parseCriticalItems(briefData["critical_items"] as? List<Map<String, Any>> ?: emptyList()),
+                                suggestions = parseSuggestions(briefData["suggestions"] as? List<Map<String, Any>> ?: emptyList()),
                                 insights = briefData["insights"] as? Map<String, Any> ?: emptyMap()
                             )
                         }
@@ -485,6 +485,89 @@ class AmbientAgentService : Disposable {
         logger.debug("✅ Circuit breaker reset")
     }
     
+    /**
+     * Enhanced parsing for critical items with detailed file information
+     */
+    private fun parseCriticalItems(rawItems: List<Map<String, Any>>): List<CriticalItem> {
+        return rawItems.map { item ->
+            CriticalItem(
+                type = item["type"]?.toString() ?: "unknown",
+                priority = item["priority"]?.toString() ?: "medium",
+                title = item["title"]?.toString() ?: "Critical Issue",
+                description = item["description"]?.toString() ?: "",
+                actionRequired = item["action_required"] as? Boolean ?: false,
+                files = parseFileIssues(item["files"] as? List<Map<String, Any>>),
+                count = (item["count"] as? Number)?.toInt() ?: 0,
+                metadata = item.filterKeys { it !in listOf("type", "priority", "title", "description", "action_required", "files", "count") }
+            )
+        }
+    }
+    
+    /**
+     * Enhanced parsing for suggestions with detailed information
+     */
+    private fun parseSuggestions(rawSuggestions: List<Map<String, Any>>): List<Suggestion> {
+        return rawSuggestions.map { suggestion ->
+            Suggestion(
+                type = suggestion["type"]?.toString() ?: "general",
+                title = suggestion["title"]?.toString() ?: "Suggestion",
+                description = suggestion["description"]?.toString() ?: "",
+                priority = suggestion["priority"]?.toString() ?: "medium",
+                action = suggestion["action"]?.toString(),
+                files = parseFileIssues(suggestion["files"] as? List<Map<String, Any>>),
+                metadata = suggestion.filterKeys { it !in listOf("type", "title", "description", "priority", "action", "files") }
+            )
+        }
+    }
+    
+    /**
+     * Parse file issues from raw data
+     */
+    private fun parseFileIssues(rawFiles: List<Map<String, Any>>?): List<FileIssue> {
+        return rawFiles?.map { file ->
+            FileIssue(
+                filePath = file["file_path"]?.toString() ?: file["path"]?.toString() ?: "unknown",
+                lineNumber = (file["line_number"] as? Number)?.toInt() ?: (file["line"] as? Number)?.toInt(),
+                description = file["description"]?.toString() ?: file["message"]?.toString() ?: "",
+                severity = file["severity"]?.toString() ?: "medium",
+                ruleId = file["rule_id"]?.toString() ?: file["rule"]?.toString(),
+                category = file["category"]?.toString() ?: file["type"]?.toString()
+            )
+        } ?: emptyList()
+    }
+    
+    /**
+     * Fetch detailed file issues for security or quality analysis
+     */
+    suspend fun getDetailedIssues(type: String): List<FileIssue>? {
+        if (!connectionState.isConnected() || circuitBreakerOpen.get()) {
+            return null
+        }
+        
+        return withRetry(maxRetries = 2) {
+            try {
+                val request = Request.Builder()
+                    .url(settings.getApiEndpointWithPath("/analysis/$type/${settings.developerId}"))
+                    .get()
+                    .build()
+                
+                httpClient.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val issuesJson = response.body?.string() ?: "[]"
+                        val issuesData = objectMapper.readValue<List<Map<String, Any>>>(issuesJson)
+                        parseFileIssues(issuesData)
+                    } else {
+                        logger.warn("⚠️ Failed to get detailed issues: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                logger.error("❌ Error getting detailed issues", e)
+                throw e
+            }
+        }
+    }
+    
     override fun dispose() {
         logger.info("🛑 Disposing Enhanced Ambient Agent Service...")
         reconnectionManager.stop()
@@ -607,9 +690,39 @@ data class MorningBrief(
     val greeting: String?,
     val summary: String,
     val activityOverview: Map<String, Any>,
-    val criticalItems: List<Map<String, Any>>,
-    val suggestions: List<Map<String, Any>>,
+    val criticalItems: List<CriticalItem>,
+    val suggestions: List<Suggestion>,
     val insights: Map<String, Any>
+)
+
+data class CriticalItem(
+    val type: String,
+    val priority: String,
+    val title: String,
+    val description: String,
+    val actionRequired: Boolean = false,
+    val files: List<FileIssue> = emptyList(),
+    val count: Int = 0,
+    val metadata: Map<String, Any> = emptyMap()
+)
+
+data class Suggestion(
+    val type: String,
+    val title: String,
+    val description: String,
+    val priority: String,
+    val action: String?,
+    val files: List<FileIssue> = emptyList(),
+    val metadata: Map<String, Any> = emptyMap()
+)
+
+data class FileIssue(
+    val filePath: String,
+    val lineNumber: Int? = null,
+    val description: String,
+    val severity: String = "medium",
+    val ruleId: String? = null,
+    val category: String? = null
 )
 
 data class AgentStatus(

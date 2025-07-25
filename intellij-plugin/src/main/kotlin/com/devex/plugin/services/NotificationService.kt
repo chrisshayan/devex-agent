@@ -75,7 +75,7 @@ class NotificationService {
             val brief = agentService.requestMorningBrief()
             if (brief != null && brief.criticalItems.isNotEmpty()) {
                 val criticalItems = brief.criticalItems.filter { 
-                    it["priority"]?.toString()?.lowercase() in listOf("critical", "high")
+                    it.priority.lowercase() in listOf("critical", "high")
                 }
                 
                 if (criticalItems.isNotEmpty()) {
@@ -120,7 +120,7 @@ class NotificationService {
     /**
      * Show notification for critical issues
      */
-    private fun showCriticalIssuesNotification(criticalItems: List<Map<String, Any>>) {
+    private fun showCriticalIssuesNotification(criticalItems: List<CriticalItem>) {
         val currentTime = System.currentTimeMillis()
         val notificationKey = "critical_issues_${criticalItems.size}"
         
@@ -136,9 +136,7 @@ class NotificationService {
             val content = buildString {
                 append("${criticalItems.size} critical item(s) need your attention:\n\n")
                 criticalItems.take(3).forEach { item ->
-                    val priority = item["priority"]?.toString() ?: "unknown"
-                    val title = item["title"]?.toString() ?: "Unknown issue"
-                    append("${getPriorityIcon(priority)} $title\n")
+                    append("${getPriorityIcon(item.priority)} ${item.title}\n")
                 }
                 if (criticalItems.size > 3) {
                     append("... and ${criticalItems.size - 3} more")
