@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class AmbientState:
     """State maintained by ambient agent for each developer"""
-    
+
     def __init__(self, developer_id: str):
         self.developer_id = developer_id
         self.events: List[Dict[str, Any]] = []
@@ -156,7 +156,13 @@ class AmbientOrchestrator:
         if project_path:
             if "active_projects" not in context:
                 context["active_projects"] = set()
-            context["active_projects"].add(project_path)
+            
+            # Handle both set and list cases (set gets converted to list later)
+            if isinstance(context["active_projects"], set):
+                context["active_projects"].add(project_path)
+            elif isinstance(context["active_projects"], list):
+                if project_path not in context["active_projects"]:
+                    context["active_projects"].append(project_path)
         
         # Track languages being used
         metadata = event_data.get("metadata", {})
@@ -164,7 +170,13 @@ class AmbientOrchestrator:
         if language:
             if "languages_used" not in context:
                 context["languages_used"] = set()
-            context["languages_used"].add(language)
+            
+            # Handle both set and list cases
+            if isinstance(context["languages_used"], set):
+                context["languages_used"].add(language)
+            elif isinstance(context["languages_used"], list):
+                if language not in context["languages_used"]:
+                    context["languages_used"].append(language)
         
         # Track activity patterns
         event_type = event_data.get("type")
@@ -173,9 +185,9 @@ class AmbientOrchestrator:
         context["event_counts"][event_type] = context["event_counts"].get(event_type, 0) + 1
         
         # Convert sets to lists for JSON serialization
-        if "active_projects" in context:
+        if "active_projects" in context and isinstance(context["active_projects"], set):
             context["active_projects"] = list(context["active_projects"])
-        if "languages_used" in context:
+        if "languages_used" in context and isinstance(context["languages_used"], set):
             context["languages_used"] = list(context["languages_used"])
     
     async def generate_morning_brief(self, developer_id: str) -> Dict[str, Any]:
@@ -253,17 +265,34 @@ class AmbientOrchestrator:
     async def _run_morning_brief_workflow(self, developer_id: str, events: List[Dict[str, Any]], state: AmbientState) -> Dict[str, Any]:
         """Run the LangGraph morning brief workflow"""
         
-        # Prepare workflow input
+        # Prepare workflow input state
         workflow_input = {
             "developer_id": developer_id,
             "events": events,
             "context": state.context,
-            "analysis_results": state.analysis_results,
-            "last_brief_generated": state.last_brief_generated
+            "messages": []
         }
         
-        # For now, provide a mock implementation until LangGraph is fully integrated
-        return await self._mock_morning_brief_workflow(workflow_input)
+        try:
+            # Run the actual LangGraph workflow
+            logger.info(f"🚀 Running LangGraph workflow for {developer_id}")
+            morning_brief = await self.morning_brief_workflow.run(workflow_input)
+            
+            logger.info(f"✅ LangGraph workflow completed for {developer_id}")
+            return morning_brief
+            
+        except Exception as e:
+            logger.error(f"❌ LangGraph workflow failed for {developer_id}: {e}")
+            
+            # Fallback to basic brief generation
+            logger.info("🔄 Falling back to basic brief generation")
+            return await self._mock_morning_brief_workflow({
+                "developer_id": developer_id,
+                "events": events,
+                "context": state.context,
+                "analysis_results": state.analysis_results,
+                "last_brief_generated": state.last_brief_generated
+            })
     
     async def _mock_morning_brief_workflow(self, workflow_input: Dict[str, Any]) -> Dict[str, Any]:
         """Mock implementation of morning brief workflow"""

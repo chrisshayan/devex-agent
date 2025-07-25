@@ -4,8 +4,10 @@
     <vendor email="support@devex.ai" url="https://devex.ai">DevEx Team</vendor>
     
     <description><![CDATA[
-    Ambient AI agent that proactively analyzes your code and provides morning briefings
-    with actionable insights and suggestions.
+    DevEx Ambient Agent - Intelligent development assistant that monitors your coding activity
+    and provides proactive insights, morning briefings, and actionable suggestions.
+    
+    Works with all JetBrains IDEs: IntelliJ IDEA, PyCharm, WebStorm, PhpStorm, CLion, etc.
     ]]></description>
     
     <change-notes><![CDATA[
@@ -18,17 +20,21 @@
     ]]></change-notes>
     
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.java</depends>
-    <depends>Git4Idea</depends>
+    <depends optional="true">Git4Idea</depends>
     
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.devex.plugin.services.AmbientAgentService"/>
-        <toolWindow id="DevEx Agent" secondary="true" icon="/icons/devex.svg"
+        <applicationService serviceImplementation="com.devex.plugin.services.NotificationService"/>
+        <applicationService serviceImplementation="com.devex.plugin.settings.DevExSettings"/>
+        <toolWindow id="DevEx Agent" secondary="true"
                     anchor="right" factoryClass="com.devex.plugin.ui.DevExToolWindowFactory"/>
+        <notificationGroup id="DevEx Agent Notifications" displayType="BALLOON"/>
+        <applicationConfigurable parentId="tools" instance="com.devex.plugin.settings.DevExSettingsConfigurable"
+                                 id="devex.settings" displayName="DevEx Ambient Agent"/>
     </extensions>
     
     <applicationListeners>
         <listener class="com.devex.plugin.monitors.FileChangeMonitor"
-                  topic="com.intellij.openapi.vfs.VirtualFileManagerListener"/>
+                  topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
     </applicationListeners>
 </idea-plugin>

@@ -5,7 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileManagerListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.devex.plugin.services.AmbientAgentService
@@ -19,7 +20,7 @@ import kotlinx.coroutines.*
  * - Non-intrusive background operation
  * - Automatic event forwarding to agent core
  */
-class FileChangeMonitor : VirtualFileManagerListener {
+class FileChangeMonitor : BulkFileListener {
     
     private val logger = Logger.getInstance(FileChangeMonitor::class.java)
     private val agentService = AmbientAgentService.getInstance()
@@ -31,18 +32,17 @@ class FileChangeMonitor : VirtualFileManagerListener {
     
     init {
         logger.info("🔍 Starting DevEx Ambient File Change Monitor...")
-        VirtualFileManager.getInstance().addVirtualFileManagerListener(this)
     }
     
-    override fun after(events: MutableList<out VirtualFileEvent>) {
+    override fun after(events: List<VFileEvent>) {
         // Process file change events
         for (event in events) {
             processFileEvent(event)
         }
     }
     
-    private fun processFileEvent(event: VirtualFileEvent) {
-        val file = event.file
+    private fun processFileEvent(event: VFileEvent) {
+        val file = event.file ?: return
         
         // Filter out irrelevant files
         if (!shouldMonitorFile(file)) {
@@ -64,11 +64,8 @@ class FileChangeMonitor : VirtualFileManagerListener {
         monitorScope.launch {
             try {
                 val eventType = when {
-                    event is VirtualFileEvent -> when {
-                        file.exists() -> "file_changed"
-                        else -> "file_deleted"
-                    }
-                    else -> "file_event"
+                    file.exists() -> "file_changed"
+                    else -> "file_deleted"
                 }
                 
                 val project = findProjectForFile(file)
@@ -147,7 +144,7 @@ class FileChangeMonitor : VirtualFileManagerListener {
         }
     }
     
-    private fun collectFileMetadata(file: VirtualFile, event: VirtualFileEvent): Map<String, Any> {
+    private fun collectFileMetadata(file: VirtualFile, event: VFileEvent): Map<String, Any> {
         val metadata = mutableMapOf<String, Any>()
         
         try {
@@ -183,7 +180,6 @@ class FileChangeMonitor : VirtualFileManagerListener {
     
     fun dispose() {
         logger.info("🛑 Disposing File Change Monitor...")
-        VirtualFileManager.getInstance().removeVirtualFileManagerListener(this)
         monitorScope.cancel()
     }
 } 
