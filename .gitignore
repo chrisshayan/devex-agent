@@ -1,0 +1,444 @@
+# =============================================================================
+# PYTHON SPECIFIC
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# gradle files
+*.gradle/
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+test-reports/
+
+# Translations
+*.mo
+*.pot
+
+# Django/Flask stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+docs/build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat-schedule.*
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# =============================================================================
+# VIRTUAL ENVIRONMENTS
+# =============================================================================
+
+# Python virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Conda environments
+.conda/
+conda-meta/
+
+# =============================================================================
+# ENVIRONMENT & CONFIGURATION FILES
+# =============================================================================
+
+# Environment variables (all variations)
+.env
+.env.*
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+*.env
+
+# Configuration files with sensitive data
+config.yaml
+config.json
+secrets.yaml
+secrets.json
+local_settings.py
+development.py
+
+# API Keys and credentials
+api_keys.txt
+credentials.json
+service_account.json
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# =============================================================================
+# DATABASES & DATA STORAGE
+# =============================================================================
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Database dumps
+*.sql
+*.dump
+
+# Redis dumps
+dump.rdb
+
+# InfluxDB data
+influxdb_data/
+
+# =============================================================================
+# LOGGING & MONITORING
+# =============================================================================
+
+# Log files
+logs/
+*.log
+*.log.*
+audit.log
+errors.log
+tlm.log
+agents.log*
+app.log
+system.log
+
+# Monitoring data
+prometheus_data/
+grafana_data/
+metrics/
+
+# =============================================================================
+# AI/ML & DATA SCIENCE
+# =============================================================================
+
+# Machine Learning models
+models/
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.onnx
+*.pb
+*.tflite
+*.model
+*.weights
+
+# Training data and datasets
+data/
+datasets/
+training_data/
+*.csv
+*.json.gz
+*.parquet
+*.feather
+
+# Model artifacts
+checkpoints/
+tensorboard_logs/
+wandb/
+mlruns/
+
+# Jupyter notebooks (optional - remove if you want to track notebooks)
+# *.ipynb
+
+# =============================================================================
+# WEB UI & FRONTEND
+# =============================================================================
+
+# Node.js dependencies
+web_ui/node_modules/
+web_ui/dist/
+web_ui/build/
+web_ui/.next/
+web_ui/.nuxt/
+
+# Package manager files
+web_ui/package-lock.json
+web_ui/yarn.lock
+web_ui/pnpm-lock.yaml
+
+# =============================================================================
+# DEVELOPMENT TOOLS & IDEs
+# =============================================================================
+
+# PyCharm
+.idea/
+
+# Vision doc
+vision/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+*Zone.Identifier
+
+# Linux
+*~
+
+# =============================================================================
+# CONTAINERIZATION & DEPLOYMENT
+# =============================================================================
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Kubernetes
+k8s-secrets.yaml
+*.kubeconfig
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Ansible
+*.retry
+
+# =============================================================================
+# CACHE & TEMPORARY FILES
+# =============================================================================
+
+# General cache
+cache/
+tmp/
+temp/
+.cache/
+.tmp/
+
+# Python cache
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# =============================================================================
+# SECURITY & COMPLIANCE
+# =============================================================================
+
+# Security scan results
+security_reports/
+vulnerability_reports/
+
+# Audit logs (system-specific)
+audit_trail/
+
+# =============================================================================
+# SYSTEM RUNTIME FILES
+# =============================================================================
+
+# Process IDs
+pid.txt
+*.pid
+
+# Lock files
+*.lock
+
+# Temporary files
+*.tmp
+*.temp
+
+# =============================================================================
+# CUSTOM TLM SYSTEM FILES
+# =============================================================================
+
+# Agent state files
+agent_state/
+agent_memory/
+
+# Portfolio snapshots
+portfolio_snapshots/
+
+# Risk calculation cache
+risk_cache/
+
+# System performance logs
+performance_logs/
+
+# Development test files
+test_*.py
+debug_*.py
+scratch_*.py
+
+# Local development overrides
+local_*.py
+dev_*.py
+
+# =============================================================================
+# EXTERNAL INTEGRATIONS
+# =============================================================================
+
+# Bloomberg API cache
+bloomberg_cache/
+
+# Reuters cache
+reuters_cache/
+
+# Third-party vendor data
+vendor_data/
+
+# =============================================================================
+# DOCUMENTATION BUILD FILES
+# =============================================================================
+
+# Sphinx
+docs/_build/
+docs/build/
+
+# MkDocs
+site/
+
+# =============================================================================
+# MISCELLANEOUS
+# =============================================================================
+
+# Temporary editor files
+*.swp
+*.swo
+*~
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Large files that shouldn't be tracked
+*.iso
+*.dmg
+*.exe
+*.msi 

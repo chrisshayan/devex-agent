@@ -1,0 +1,34 @@
+<idea-plugin>
+    <id>com.devex.ambient-agent</id>
+    <name>DevEx Ambient Agent</name>
+    <vendor email="support@devex.ai" url="https://devex.ai">DevEx Team</vendor>
+    
+    <description><![CDATA[
+    Ambient AI agent that proactively analyzes your code and provides morning briefings
+    with actionable insights and suggestions.
+    ]]></description>
+    
+    <change-notes><![CDATA[
+    <h2>0.1.0</h2>
+    <ul>
+        <li>Initial release with basic ambient monitoring</li>
+        <li>Morning brief generation</li>
+        <li>File change detection</li>
+    </ul>
+    ]]></change-notes>
+    
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+    <depends>Git4Idea</depends>
+    
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.devex.plugin.services.AmbientAgentService"/>
+        <toolWindow id="DevEx Agent" secondary="true" icon="/icons/devex.svg"
+                    anchor="right" factoryClass="com.devex.plugin.ui.DevExToolWindowFactory"/>
+    </extensions>
+    
+    <applicationListeners>
+        <listener class="com.devex.plugin.monitors.FileChangeMonitor"
+                  topic="com.intellij.openapi.vfs.VirtualFileManagerListener"/>
+    </applicationListeners>
+</idea-plugin>
