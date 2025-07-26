@@ -342,8 +342,8 @@ class GitIgnoreFilter:
         return {
             "total_patterns": len(self.patterns),
             "negation_patterns": len(self.negation_patterns),
-            "gitignore_loaded": any(
-                (self.project_root / ".gitignore").exists(),
+            "gitignore_loaded": (
+                (self.project_root / ".gitignore").exists() or
                 (self.project_root / ".git" / "info" / "exclude").exists()
             ),
             "project_root": str(self.project_root)
