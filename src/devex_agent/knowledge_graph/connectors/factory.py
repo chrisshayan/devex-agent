@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 
 from ..core.models import GoldenSourceConfig, SourceType
 from .github_connector import GitHubConnector
+from .file_connector import FileConnector
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +46,7 @@ class ConnectorFactory:
         if source_config.type == SourceType.GITHUB:
             return GitHubConnector(source_config)
         elif source_config.type == SourceType.FILE:
-            # TODO: Implement FileConnector
-            logger.warning(f"FileConnector not yet implemented, using stub")
-            return StubConnector(source_config)
+            return FileConnector(source_config)
         elif source_config.type == SourceType.CONFLUENCE:
             # TODO: Implement ConfluenceConnector
             logger.warning(f"ConfluenceConnector not yet implemented, using stub")

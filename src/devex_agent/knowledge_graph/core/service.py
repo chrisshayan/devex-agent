@@ -261,7 +261,7 @@ class KnowledgeGraphService:
             logger.info(f"🚀 Starting ingestion for source: {source_id}")
             
             # Get appropriate connector
-            connector = await self.connector_factory.get_connector(source_config.type)
+            connector = self.connector_factory.create_connector(source_config)
             
             # Run ingestion
             result = await self.ingestion_engine.ingest_source(
@@ -534,7 +534,7 @@ class KnowledgeGraphService:
     async def _validate_source_config(self, source_config: GoldenSourceConfig):
         """Validate source configuration"""
         # Test connection using appropriate connector
-        connector = await self.connector_factory.get_connector(source_config.type)
+        connector = self.connector_factory.create_connector(source_config)
         await connector.validate_config(source_config.config)
     
     def _parse_sync_interval(self, interval: str) -> timedelta:
