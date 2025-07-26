@@ -93,7 +93,9 @@ class KnowledgeGraphService:
             logger.info("✅ Knowledge Graph Service initialized successfully")
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Knowledge Graph Service: {e}")
+            logger.error(
+            f"❌ Failed to initialize Knowledge Graph Service: {e}"
+        )
             raise
     
     async def cleanup(self):

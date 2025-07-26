@@ -12,7 +12,7 @@ import asyncio
 
 from langchain_openai import ChatOpenAI
 from langchain_chroma import Chroma
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pygments import highlight
@@ -68,7 +68,7 @@ class CodeAnalyzer:
     def _init_vector_store(self):
         """Initialize ChromaDB vector store for code similarity search"""
         try:
-            self.embeddings = SentenceTransformerEmbeddings(
+            self.embeddings = HuggingFaceEmbeddings(
                 model_name="all-MiniLM-L6-v2"
             )
             

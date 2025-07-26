@@ -3,14 +3,15 @@ Enhanced Code Analyzer - Real security and quality analysis with specific file d
 Provides detailed analysis using bandit, pylint, flake8, and other professional tools
 """
 
-import json
-import subprocess
-import logging
-import tempfile
-from typing import Dict, List, Any, Optional
-from pathlib import Path
+# Standard library imports
 import asyncio
+import json
+import logging
 import os
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Dict, List, Any, Optional
 
 # Import performance utilities and gitignore filter
 try:
@@ -20,10 +21,12 @@ try:
 except ImportError:
     # Fallback for when knowledge graph utils aren't available
     PERFORMANCE_UTILS_AVAILABLE = False
+
     def cached(*args, **kwargs):
         def decorator(func):
             return func
         return decorator
+
     def timed(*args, **kwargs):
         def decorator(func):
             return func

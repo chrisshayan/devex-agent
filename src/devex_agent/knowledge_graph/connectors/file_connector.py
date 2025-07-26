@@ -8,7 +8,6 @@ import hashlib
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 from datetime import datetime
-import fnmatch
 
 from ..core.models import GoldenSourceConfig, FileSourceConfig
 from ..utils.gitignore_filter import create_gitignore_filter

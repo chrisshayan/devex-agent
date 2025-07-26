@@ -21,6 +21,7 @@ dependencies = [
     "langchain-openai>=0.0.5",
     "langchain-community>=0.0.13",
     "langchain-chroma>=0.1.0",
+    "langchain-huggingface>=0.0.1",
     "langgraph>=0.0.26",
     "bandit>=1.7.5",
     "safety>=3.0.0",

@@ -1,0 +1,182 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "DevEx Ambient Agent - Production Dashboard",
+    "tags": ["devex", "agent", "production"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "schemaVersion": 27,
+    "version": 1,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Agent Health Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"devex-agent\"}",
+            "legendFormat": "Agent Status"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "API Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"devex-agent\"}[5m])",
+            "legendFormat": "Requests/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Response Time (95th percentile)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"devex-agent\"}[5m]))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Knowledge Graph Operations",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(knowledge_graph_operations_total[5m])",
+            "legendFormat": "Operations/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"devex-agent\"}",
+            "legendFormat": "Memory (bytes)"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total{job=\"devex-agent\"}[5m])",
+            "legendFormat": "CPU Usage"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Cache Performance",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "cache_hits_total{job=\"devex-agent\"}",
+            "legendFormat": "Cache Hits"
+          },
+          {
+            "expr": "cache_misses_total{job=\"devex-agent\"}",
+            "legendFormat": "Cache Misses"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"devex-agent\",code=~\"5..\"}[5m])",
+            "legendFormat": "Error Rate"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "Active Connections",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "http_connections_active{job=\"devex-agent\"}",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "Knowledge Graph Entities",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "knowledge_graph_entities_total",
+            "legendFormat": "Total Entities"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 32}
+      },
+      {
+        "id": 11,
+        "title": "Relationship Discovery Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(relationship_discovery_operations_total[5m])",
+            "legendFormat": "Discoveries/sec"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 32}
+      },
+      {
+        "id": 12,
+        "title": "Source Ingestion Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ingestion_jobs_active",
+            "legendFormat": "Active Jobs"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 32}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    }
+  }
+} 

@@ -8,6 +8,7 @@ from typing import Dict, Any, Optional
 from ..core.models import GoldenSourceConfig, SourceType
 from .github_connector import GitHubConnector
 from .file_connector import FileConnector
+from .confluence_connector import ConfluenceConnector
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +49,8 @@ class ConnectorFactory:
         elif source_config.type == SourceType.FILE:
             return FileConnector(source_config)
         elif source_config.type == SourceType.CONFLUENCE:
-            # TODO: Implement ConfluenceConnector
-            logger.warning(f"ConfluenceConnector not yet implemented, using stub")
-            return StubConnector(source_config)
+            logger.info(f"🌐 Creating Confluence connector for team documentation")
+            return ConfluenceConnector(source_config)
         elif source_config.type == SourceType.DEEPWIKI:
             # TODO: Implement DeepWikiConnector
             logger.warning(f"DeepWikiConnector not yet implemented, using stub")

@@ -3,13 +3,17 @@ DevEx Ambient Agent - Main Application Entry Point
 Following LangChain Academy ambient agent patterns with Knowledge Graph integration
 """
 
+# Standard library imports
+import logging
+import uvicorn
+from datetime import datetime
+from typing import Dict, Any, List, Optional
+
+# Third-party imports
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from typing import Dict, Any, List, Optional
-import logging
-from datetime import datetime
 
+# Local application imports
 from .core.ambient_orchestrator import AmbientOrchestrator
 from .api.models import EventRequest, MorningBriefResponse
 from .knowledge_graph.core.service import KnowledgeGraphService
@@ -26,7 +30,10 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI(
     title="DevEx Ambient Agent with Knowledge Graph",
-    description="Ambient AI agent for enhanced developer experience with knowledge-driven insights",
+    description=(
+        "Ambient AI agent for enhanced developer experience "
+        "with knowledge-driven insights"
+    ),
     version="1.0.0"
 )
 
@@ -55,10 +62,14 @@ async def startup_event():
     await knowledge_graph.initialize()
     
     # Initialize Ambient Orchestrator with Knowledge Graph service
-    ambient_orchestrator = AmbientOrchestrator(knowledge_graph_service=knowledge_graph)
+    ambient_orchestrator = AmbientOrchestrator(
+        knowledge_graph_service=knowledge_graph
+    )
     await ambient_orchestrator.initialize()
     
-    logger.info("✅ DevEx Ambient Agent with Knowledge Graph initialized and monitoring")
+    logger.info(
+        "✅ DevEx Ambient Agent with Knowledge Graph initialized and monitoring"
+    )
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -98,7 +109,9 @@ async def ingest_event(event: EventRequest):
         }
     except Exception as e:
         logger.error(f"❌ Error processing event: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing event: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error processing event: {str(e)}"
+        )
 
 @app.get("/brief/morning/{developer_id}")
 async def get_morning_brief(developer_id: str) -> MorningBriefResponse:
