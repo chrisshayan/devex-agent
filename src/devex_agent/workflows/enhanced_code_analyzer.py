@@ -78,13 +78,21 @@ class EnhancedCodeAnalyzer:
             result = await self._run_command(cmd)
             
             if result.returncode != 0 and result.returncode != 1:  # Bandit returns 1 if issues found
-                logger.error(f"Bandit failed: {result.stderr}")
+                logger.warning(f"Bandit returned code {result.returncode}: {result.stderr}")
                 return []
             
-            if not result.stdout:
+            if not result.stdout or not result.stdout.strip():
+                logger.debug("Bandit returned empty output")
                 return []
             
-            bandit_data = json.loads(result.stdout)
+            # Try to parse JSON, with better error handling
+            try:
+                bandit_data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Bandit returned invalid JSON: {e}")
+                logger.debug(f"Bandit stdout: {result.stdout[:200]}...")
+                return []
+            
             issues = []
             
             for result_item in bandit_data.get("results", []):
@@ -115,18 +123,28 @@ class EnhancedCodeAnalyzer:
             req_files.extend(list(self.project_root.rglob("pyproject.toml")))
             
             if not req_files:
+                logger.debug("No requirements files found for Safety analysis")
                 return []
             
             cmd = ["safety", "check", "--json"]
             result = await self._run_command(cmd, cwd=self.project_root)
             
             if result.returncode not in [0, 64]:  # Safety returns 64 if vulnerabilities found
+                logger.warning(f"Safety returned code {result.returncode}: {result.stderr}")
                 return []
             
-            if not result.stdout:
+            if not result.stdout or not result.stdout.strip():
+                logger.debug("Safety returned empty output - no vulnerabilities found")
                 return []
             
-            safety_data = json.loads(result.stdout)
+            # Try to parse JSON, with better error handling
+            try:
+                safety_data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Safety returned invalid JSON: {e}")
+                logger.debug(f"Safety stdout: {result.stdout[:200]}...")
+                return []
+            
             issues = []
             
             for vuln in safety_data:
@@ -198,10 +216,18 @@ class EnhancedCodeAnalyzer:
             result = await self._run_command(cmd)
             
             # Pylint returns non-zero when issues are found, that's normal
-            if not result.stdout:
+            if not result.stdout or not result.stdout.strip():
+                logger.debug("Pylint returned empty output")
                 return []
             
-            pylint_data = json.loads(result.stdout)
+            # Try to parse JSON, with better error handling
+            try:
+                pylint_data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Pylint returned invalid JSON: {e}")
+                logger.debug(f"Pylint stdout: {result.stdout[:200]}...")
+                return []
+            
             issues = []
             
             for msg in pylint_data:
@@ -230,13 +256,17 @@ class EnhancedCodeAnalyzer:
             cmd = ["flake8", "--format=json", str(self.project_root)]
             result = await self._run_command(cmd)
             
-            if not result.stdout:
+            if result.returncode != 0:
+                logger.warning(f"Flake8 returned code {result.returncode}: {result.stderr}")
+            
+            if not result.stdout or not result.stdout.strip():
+                logger.debug("Flake8 returned empty output - no style issues found")
                 return []
             
             # Flake8 JSON output is one object per line
             issues = []
             for line in result.stdout.strip().split('\n'):
-                if line:
+                if line.strip():
                     try:
                         data = json.loads(line)
                         issue = {
@@ -249,7 +279,7 @@ class EnhancedCodeAnalyzer:
                             "tool": "flake8"
                         }
                         issues.append(issue)
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
                         continue
             
             logger.info(f"🔍 Flake8 found {len(issues)} style issues")
@@ -369,8 +399,10 @@ class EnhancedCodeAnalyzer:
             return []
     
     async def _run_command(self, cmd: List[str], cwd: Optional[Path] = None) -> subprocess.CompletedProcess:
-        """Run a command asynchronously"""
+        """Run a command asynchronously with better error handling"""
         try:
+            logger.debug(f"Running command: {' '.join(cmd)}")
+            
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -379,11 +411,18 @@ class EnhancedCodeAnalyzer:
             )
             stdout, stderr = await process.communicate()
             
+            stdout_str = stdout.decode('utf-8') if stdout else ""
+            stderr_str = stderr.decode('utf-8') if stderr else ""
+            
+            if process.returncode != 0:
+                logger.debug(f"Command {cmd[0]} returned {process.returncode}, stderr: {stderr_str[:200]}")
+            
             return subprocess.CompletedProcess(
-                cmd, process.returncode, 
-                stdout.decode('utf-8') if stdout else "",
-                stderr.decode('utf-8') if stderr else ""
+                cmd, process.returncode, stdout_str, stderr_str
             )
+        except FileNotFoundError:
+            logger.warning(f"Command not found: {cmd[0]} - tool may not be installed")
+            return subprocess.CompletedProcess(cmd, 127, "", f"Command not found: {cmd[0]}")
         except Exception as e:
             logger.error(f"Command failed: {' '.join(cmd)}: {e}")
             return subprocess.CompletedProcess(cmd, 1, "", str(e))
