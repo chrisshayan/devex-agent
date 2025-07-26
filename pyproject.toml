@@ -37,6 +37,14 @@ dependencies = [
     "sentence-transformers>=2.2.0",
     "neo4j>=5.0.0",
     "psycopg2-binary>=2.9.0",
+    # ML and CodeBERT dependencies
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "numpy>=1.24.0",
+    "faiss-cpu>=1.7.4",
+    "datasets>=2.12.0",
+    "accelerate>=0.20.0",
 ]
 
 [dependency-groups]

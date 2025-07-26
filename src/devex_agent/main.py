@@ -450,6 +450,164 @@ async def sync_all_sources(background_tasks: BackgroundTasks):
         logger.error(f"❌ Error starting sync: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error starting sync: {str(e)}")
 
+
+# ===== ML & Developer Intelligence Endpoints =====
+
+@app.post("/api/v1/ml/developer/{developer_id}/analyze")
+async def analyze_developer_code(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Analyze developer's code patterns using CodeBERT"""
+    try:
+        code_snippets = request.get("code_snippets", [])
+        file_paths = request.get("file_paths", [])
+        
+        if not code_snippets:
+            raise HTTPException(status_code=400, detail="No code snippets provided")
+        
+        logger.info(f"🔍 Analyzing code for developer: {developer_id}")
+        
+        analysis = await knowledge_graph.analyze_developer_code(
+            developer_id=developer_id,
+            code_snippets=code_snippets,
+            file_paths=file_paths
+        )
+        
+        if analysis is None:
+            return {
+                "status": "unavailable",
+                "message": "ML capabilities not available",
+                "analysis": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "analysis": analysis.dict() if hasattr(analysis, 'dict') else analysis,
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error analyzing developer code: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing code: {str(e)}")
+
+
+@app.post("/api/v1/ml/developer/{developer_id}/skills")
+async def assess_developer_skills(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Assess developer skills using CodeBERT analysis"""
+    try:
+        code_snippets = request.get("code_snippets", [])
+        
+        if not code_snippets:
+            raise HTTPException(status_code=400, detail="No code snippets provided")
+        
+        logger.info(f"📏 Assessing skills for developer: {developer_id}")
+        
+        skills = await knowledge_graph.assess_developer_skills(
+            developer_id=developer_id,
+            code_snippets=code_snippets
+        )
+        
+        if skills is None:
+            return {
+                "status": "unavailable",
+                "message": "ML capabilities not available",
+                "skills": {}
+            }
+        
+        # Convert skill assessments to dict format
+        skills_dict = {}
+        for skill_name, assessment in skills.items():
+            skills_dict[skill_name] = assessment.dict() if hasattr(assessment, 'dict') else assessment
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "skills": skills_dict,
+            "assessed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error assessing developer skills: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error assessing skills: {str(e)}")
+
+
+@app.post("/api/v1/ml/code/similar")
+async def find_similar_code(request: Dict[str, Any]):
+    """Find similar code patterns using CodeBERT"""
+    try:
+        query_code = request.get("query_code", "")
+        developer_id = request.get("developer_id")
+        threshold = request.get("threshold", 0.7)
+        
+        if not query_code:
+            raise HTTPException(status_code=400, detail="No query code provided")
+        
+        logger.info("🔍 Finding similar code patterns")
+        
+        similar_patterns = await knowledge_graph.find_similar_code_patterns(
+            query_code=query_code,
+            developer_id=developer_id,
+            threshold=threshold
+        )
+        
+        if similar_patterns is None:
+            return {
+                "status": "unavailable", 
+                "message": "ML capabilities not available",
+                "similar_patterns": []
+            }
+        
+        return {
+            "status": "success",
+            "query_code": query_code[:100] + "..." if len(query_code) > 100 else query_code,
+            "threshold": threshold,
+            "similar_patterns": similar_patterns,
+            "found_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error finding similar code: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error finding similar code: {str(e)}")
+
+
+@app.post("/api/v1/ml/code/embeddings")
+async def generate_code_embeddings(request: Dict[str, Any]):
+    """Generate CodeBERT embeddings for code snippets"""
+    try:
+        code_snippets = request.get("code_snippets", [])
+        
+        if not code_snippets:
+            raise HTTPException(status_code=400, detail="No code snippets provided")
+        
+        logger.info(f"🔮 Generating embeddings for {len(code_snippets)} snippets")
+        
+        embeddings = await knowledge_graph.generate_code_embeddings(code_snippets)
+        
+        if embeddings is None:
+            return {
+                "status": "unavailable",
+                "message": "ML capabilities not available", 
+                "embeddings": []
+            }
+        
+        return {
+            "status": "success",
+            "snippet_count": len(code_snippets),
+            "embeddings": embeddings,
+            "embedding_dimension": len(embeddings[0]) if embeddings else 0,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating embeddings: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating embeddings: {str(e)}")
+
+
 if __name__ == "__main__":
     settings = get_settings()
     uvicorn.run(

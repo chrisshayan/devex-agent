@@ -22,6 +22,16 @@ from ..engines.relationship_engine import RelationshipEngine
 from ..connectors.factory import ConnectorFactory
 from ...config.settings import get_settings
 
+# Import ML capabilities
+try:
+    from ..ml.codebert_engine import CodeBERTEngine
+    from ..ml.developer_intelligence import DeveloperIntelligenceEngine
+    from ..ml.models import DeveloperSkillProfile, SkillAssessment, PatternAnalysis
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+    logger.warning("ML capabilities not available - CodeBERT features will be disabled")
+
 logger = logging.getLogger(__name__)
 
 class KnowledgeGraphService:
@@ -46,6 +56,10 @@ class KnowledgeGraphService:
         self.ingestion_engine: Optional[IngestionEngine] = None
         self.search_engine: Optional[SearchEngine] = None
         self.relationship_engine: Optional[RelationshipEngine] = None
+        
+        # ML engines
+        self.codebert_engine: Optional[CodeBERTEngine] = None
+        self.developer_intelligence: Optional[DeveloperIntelligenceEngine] = None
         
         # Connector factory
         self.connector_factory: Optional[ConnectorFactory] = None
@@ -89,6 +103,22 @@ class KnowledgeGraphService:
             # Initialize connector factory
             self.connector_factory = ConnectorFactory()
             
+            # Initialize ML engines if available
+            if ML_AVAILABLE:
+                logger.info("🤖 Initializing ML capabilities...")
+                
+                self.codebert_engine = CodeBERTEngine()
+                await self.codebert_engine.initialize()
+                
+                self.developer_intelligence = DeveloperIntelligenceEngine(
+                    codebert_engine=self.codebert_engine
+                )
+                await self.developer_intelligence.initialize()
+                
+                logger.info("✅ ML capabilities initialized successfully")
+            else:
+                logger.info("⚠️ ML capabilities not available - continuing without CodeBERT")
+            
             self.is_initialized = True
             logger.info("✅ Knowledge Graph Service initialized successfully")
             
@@ -105,6 +135,12 @@ class KnowledgeGraphService:
         # Cancel active jobs
         for job_id in list(self.active_jobs.keys()):
             await self.cancel_ingestion_job(job_id)
+        
+        # Cleanup ML engines
+        if self.developer_intelligence:
+            await self.developer_intelligence.cleanup()
+        if self.codebert_engine:
+            await self.codebert_engine.cleanup()
         
         # Cleanup storage managers
         if self.vector_store:
@@ -579,4 +615,137 @@ class KnowledgeGraphService:
         if sync_tasks:
             logger.info(f"🔄 Starting sync for {len(sync_tasks)} sources")
             await asyncio.gather(*sync_tasks, return_exceptions=True)
-            logger.info("✅ Source sync completed") 
+            logger.info("✅ Source sync completed")
+    
+    # ===== ML & Developer Intelligence Methods =====
+    
+    async def analyze_developer_code(self, 
+                                   developer_id: str, 
+                                   code_snippets: List[str],
+                                   file_paths: List[str] = None) -> Optional[Any]:
+        """
+        Analyze developer's code patterns using CodeBERT
+        
+        Args:
+            developer_id: Developer identifier
+            code_snippets: List of code snippets to analyze
+            file_paths: Optional file paths for context
+            
+        Returns:
+            Pattern analysis results or None if ML not available
+        """
+        if not ML_AVAILABLE or not self.developer_intelligence:
+            logger.warning("ML capabilities not available for code analysis")
+            return None
+        
+        logger.info(f"🔍 Analyzing code patterns for developer: {developer_id}")
+        
+        try:
+            pattern_analysis = await self.developer_intelligence.analyze_developer_code(
+                developer_id=developer_id,
+                code_snippets=code_snippets,
+                file_paths=file_paths or []
+            )
+            
+            logger.info(f"✅ Code analysis completed for {developer_id}")
+            return pattern_analysis
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to analyze developer code: {e}")
+            raise
+    
+    async def assess_developer_skills(self, 
+                                    developer_id: str, 
+                                    code_snippets: List[str]) -> Optional[Dict[str, Any]]:
+        """
+        Assess developer skills using CodeBERT analysis
+        
+        Args:
+            developer_id: Developer identifier
+            code_snippets: Recent code snippets for analysis
+            
+        Returns:
+            Dictionary of skill assessments or None if ML not available
+        """
+        if not ML_AVAILABLE or not self.developer_intelligence:
+            logger.warning("ML capabilities not available for skill assessment")
+            return None
+        
+        logger.info(f"📏 Assessing skills for developer: {developer_id}")
+        
+        try:
+            skill_assessments = await self.developer_intelligence.assess_developer_skills(
+                developer_id=developer_id,
+                code_snippets=code_snippets
+            )
+            
+            logger.info(f"✅ Skill assessment completed for {developer_id}")
+            return skill_assessments
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to assess developer skills: {e}")
+            raise
+    
+    async def find_similar_code_patterns(self, 
+                                       query_code: str, 
+                                       developer_id: str = None,
+                                       threshold: float = 0.7) -> Optional[List[Dict[str, Any]]]:
+        """
+        Find similar code patterns using CodeBERT semantic similarity
+        
+        Args:
+            query_code: Code to find similarities for
+            developer_id: Optional developer context
+            threshold: Similarity threshold
+            
+        Returns:
+            List of similar code patterns or None if ML not available
+        """
+        if not ML_AVAILABLE or not self.codebert_engine:
+            logger.warning("ML capabilities not available for similarity search")
+            return None
+        
+        logger.info("🔍 Finding similar code patterns using CodeBERT")
+        
+        try:
+            # Get code from knowledge base (simplified - would query vector store)
+            candidate_codes = []  # Would be populated from knowledge graph
+            
+            similar_patterns = await self.codebert_engine.find_similar_code(
+                query_code=query_code,
+                candidate_codes=candidate_codes,
+                threshold=threshold
+            )
+            
+            logger.info(f"✅ Found {len(similar_patterns)} similar code patterns")
+            return similar_patterns
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to find similar code patterns: {e}")
+            raise
+    
+    async def generate_code_embeddings(self, code_snippets: List[str]) -> Optional[List[List[float]]]:
+        """
+        Generate CodeBERT embeddings for code snippets
+        
+        Args:
+            code_snippets: List of code snippets
+            
+        Returns:
+            List of embedding vectors or None if ML not available
+        """
+        if not ML_AVAILABLE or not self.codebert_engine:
+            logger.warning("ML capabilities not available for embedding generation")
+            return None
+        
+        logger.info(f"🔮 Generating CodeBERT embeddings for {len(code_snippets)} snippets")
+        
+        try:
+            embeddings = await self.codebert_engine.generate_embeddings(code_snippets)
+            
+            logger.info(f"✅ Generated {len(embeddings)} embeddings")
+            return embeddings
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to generate code embeddings: {e}")
+            raise 
