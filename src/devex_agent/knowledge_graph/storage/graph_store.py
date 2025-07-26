@@ -690,3 +690,64 @@ class GraphStoreManager:
         # Sort by similarity and limit results
         similar_entities.sort(key=lambda x: x["similarity_score"], reverse=True)
         return similar_entities[:limit] 
+
+    async def get_entities_by_source(self, source_id: str) -> List[Dict[str, Any]]:
+        """Get all entities for a specific source"""
+        try:
+            if self.driver:
+                return await self._get_entities_by_source_neo4j(source_id)
+            else:
+                return await self._get_entities_by_source_fallback(source_id)
+        except Exception as e:
+            logger.error(f"Failed to get entities by source: {e}")
+            return []
+    
+    async def _get_entities_by_source_neo4j(self, source_id: str) -> List[Dict[str, Any]]:
+        """Get entities by source using Neo4j"""
+        entities = []
+        
+        try:
+            with self.driver.session() as session:
+                query = """
+                MATCH (e:Entity {source_id: $source_id})
+                RETURN e.id as id, e.type as entity_type, e as properties
+                """
+                
+                result = session.run(query, source_id=source_id)
+                
+                for record in result:
+                    entity = {
+                        'id': record['id'],
+                        'entity_type': record['entity_type'],
+                        'properties': dict(record['properties'])
+                    }
+                    entities.append(entity)
+                    
+        except Exception as e:
+            logger.error(f"Neo4j get entities by source failed: {e}")
+        
+        return entities
+    
+    async def _get_entities_by_source_fallback(self, source_id: str) -> List[Dict[str, Any]]:
+        """Get entities by source using fallback storage"""
+        entities = []
+        
+        try:
+            # Get entity IDs for this source
+            entity_ids = self.source_entities.get(source_id, set())
+            
+            # Get full entity data for each ID
+            for entity_id in entity_ids:
+                if entity_id in self.entities:
+                    entity_data = self.entities[entity_id]
+                    entity = {
+                        'id': entity_id,
+                        'entity_type': entity_data.get('entity_type', 'unknown'),
+                        'properties': entity_data.get('properties', {})
+                    }
+                    entities.append(entity)
+                    
+        except Exception as e:
+            logger.error(f"Fallback get entities by source failed: {e}")
+        
+        return entities 
