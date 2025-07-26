@@ -14,6 +14,7 @@ import json
 import math
 
 from ..core.models import RelationshipType, KnowledgeRelationship
+from ..utils.performance import cached, timed, run_parallel, run_batch_parallel
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class RelationshipEngine:
         self.is_initialized = False
         logger.info("✅ Relationship Engine cleanup complete")
     
+    @timed(operation_name="relationship_discovery")
     async def discover_relationships(self, source_id: str) -> int:
         """
         Discover relationships for all entities in a source using advanced algorithms
@@ -81,9 +83,7 @@ class RelationshipEngine:
         if not self.is_initialized:
             raise RuntimeError("Relationship Engine not initialized")
         
-        logger.info(f"🕸️ Starting relationship discovery for source: {source_id}")
-        
-        relationships_found = 0
+        logger.info(f"🕸️ Starting parallel relationship discovery for source: {source_id}")
         
         try:
             # Get all entities for this source
@@ -92,45 +92,46 @@ class RelationshipEngine:
                 logger.info(f"No entities found for source: {source_id}")
                 return 0
             
-            logger.info(f"📊 Analyzing {len(entities)} entities for relationships")
+            logger.info(f"📊 Analyzing {len(entities)} entities for relationships using parallel processing")
             
-            # 1. Discover code dependencies
-            code_relationships = await self._discover_code_dependencies(entities, source_id)
-            relationships_found += len(code_relationships)
+            # Run all relationship discovery algorithms in parallel
+            discovery_tasks = [
+                self._discover_code_dependencies(entities, source_id),
+                self._discover_semantic_similarities(entities, source_id),
+                self._discover_design_patterns(entities, source_id),
+                self._discover_cross_references(entities, source_id),
+                self._discover_hierarchical_relationships(entities, source_id),
+                self._discover_temporal_relationships(entities, source_id)
+            ]
             
-            # 2. Find semantic similarities
-            similarity_relationships = await self._discover_semantic_similarities(entities, source_id)
-            relationships_found += len(similarity_relationships)
+            logger.info("🚀 Running 6 relationship discovery algorithms in parallel...")
+            relationship_results = await run_parallel(discovery_tasks, max_concurrency=6)
             
-            # 3. Detect design patterns
-            pattern_relationships = await self._discover_design_patterns(entities, source_id)
-            relationships_found += len(pattern_relationships)
+            # Flatten and store all discovered relationships
+            all_relationships = []
+            relationships_found = 0
             
-            # 4. Find cross-references (documentation to code, issues to code, etc.)
-            cross_ref_relationships = await self._discover_cross_references(entities, source_id)
-            relationships_found += len(cross_ref_relationships)
+            for relationships in relationship_results:
+                all_relationships.extend(relationships)
+                relationships_found += len(relationships)
             
-            # 5. Discover hierarchical relationships
-            hierarchical_relationships = await self._discover_hierarchical_relationships(entities, source_id)
-            relationships_found += len(hierarchical_relationships)
+            # Store relationships in parallel batches
+            if all_relationships:
+                logger.info(f"💾 Storing {len(all_relationships)} relationships in parallel batches...")
+                
+                async def store_relationship(relationship):
+                    return await self.graph_store.store_relationship(relationship)
+                
+                await run_batch_parallel(
+                    all_relationships, 
+                    store_relationship, 
+                    batch_size=20  # Process 20 relationships per batch
+                )
             
-            # 6. Find temporal relationships (evolution patterns)
-            temporal_relationships = await self._discover_temporal_relationships(entities, source_id)
-            relationships_found += len(temporal_relationships)
-            
-            # Store all discovered relationships
-            all_relationships = (
-                code_relationships + similarity_relationships + pattern_relationships +
-                cross_ref_relationships + hierarchical_relationships + temporal_relationships
-            )
-            
-            for relationship in all_relationships:
-                await self.graph_store.store_relationship(relationship)
-            
-            # 7. Run graph analysis algorithms for additional insights
+            # Run graph analysis algorithms for additional insights
             await self._run_graph_analysis(source_id)
             
-            logger.info(f"✅ Relationship discovery completed for {source_id}: {relationships_found} relationships found")
+            logger.info(f"✅ Parallel relationship discovery completed for {source_id}: {relationships_found} relationships found")
             
         except Exception as e:
             logger.error(f"❌ Relationship discovery failed for {source_id}: {e}")

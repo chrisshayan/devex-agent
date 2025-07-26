@@ -12,6 +12,23 @@ from pathlib import Path
 import asyncio
 import os
 
+# Import performance utilities and gitignore filter
+try:
+    from ..knowledge_graph.utils.performance import cached, timed
+    from ..knowledge_graph.utils.gitignore_filter import create_gitignore_filter
+    PERFORMANCE_UTILS_AVAILABLE = True
+except ImportError:
+    # Fallback for when knowledge graph utils aren't available
+    PERFORMANCE_UTILS_AVAILABLE = False
+    def cached(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    def timed(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+
 logger = logging.getLogger(__name__)
 
 class EnhancedCodeAnalyzer:
@@ -26,55 +43,98 @@ class EnhancedCodeAnalyzer:
             ".java": "java",
             ".kt": "kotlin"
         }
+        
+        # Initialize gitignore filter if available
+        if PERFORMANCE_UTILS_AVAILABLE:
+            try:
+                self.gitignore_filter = create_gitignore_filter(self.project_root)
+                logger.info(f"🚫 Enhanced analysis will respect {self.gitignore_filter.get_exclusion_stats()['total_patterns']} gitignore patterns")
+            except Exception as e:
+                logger.warning(f"Failed to initialize gitignore filter: {e}")
+                self.gitignore_filter = None
+        else:
+            self.gitignore_filter = None
     
     async def analyze_project_security(self) -> List[Dict[str, Any]]:
-        """Run comprehensive security analysis using multiple tools"""
+        """Run comprehensive security analysis using multiple tools in parallel"""
+        logger.info("🚀 Running security analysis tools in parallel...")
+        
+        # Run all security analysis tools in parallel
+        security_tasks = [
+            self._run_bandit_analysis(),
+            self._run_safety_analysis(),
+            self._run_semgrep_analysis()
+        ]
+        
+        # Execute tasks concurrently
+        results = await asyncio.gather(*security_tasks, return_exceptions=True)
+        
+        # Flatten and collect results
         security_issues = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.warning(f"Security analysis task {i} failed: {result}")
+            elif isinstance(result, list):
+                security_issues.extend(result)
         
-        # 1. Bandit for Python security analysis
-        bandit_issues = await self._run_bandit_analysis()
-        security_issues.extend(bandit_issues)
-        
-        # 2. Safety for dependency vulnerabilities
-        safety_issues = await self._run_safety_analysis()
-        security_issues.extend(safety_issues)
-        
-        # 3. Semgrep for multi-language security patterns
-        semgrep_issues = await self._run_semgrep_analysis()
-        security_issues.extend(semgrep_issues)
-        
+        logger.info(f"✅ Parallel security analysis complete: {len(security_issues)} issues found")
         return security_issues
     
     async def analyze_project_quality(self) -> List[Dict[str, Any]]:
-        """Run comprehensive code quality analysis"""
+        """Run comprehensive code quality analysis in parallel"""
+        logger.info("🚀 Running quality analysis tools in parallel...")
+        
+        # Run all quality analysis tools in parallel with controlled concurrency
+        quality_tasks = [
+            self._run_pylint_analysis(),
+            self._run_flake8_analysis(),
+            self._run_mypy_analysis(),
+            self._run_complexity_analysis(),
+            self._run_dead_code_analysis()
+        ]
+        
+        # Execute tasks concurrently with limited concurrency to avoid overwhelming the system
+        semaphore = asyncio.Semaphore(3)  # Limit to 3 concurrent analysis tools
+        
+        async def bounded_task(task):
+            async with semaphore:
+                return await task
+        
+        bounded_tasks = [bounded_task(task) for task in quality_tasks]
+        results = await asyncio.gather(*bounded_tasks, return_exceptions=True)
+        
+        # Flatten and collect results
         quality_issues = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.warning(f"Quality analysis task {i} failed: {result}")
+            elif isinstance(result, list):
+                quality_issues.extend(result)
         
-        # 1. Pylint for Python code quality
-        pylint_issues = await self._run_pylint_analysis()
-        quality_issues.extend(pylint_issues)
-        
-        # 2. Flake8 for Python style and errors
-        flake8_issues = await self._run_flake8_analysis()
-        quality_issues.extend(flake8_issues)
-        
-        # 3. MyPy for type checking
-        mypy_issues = await self._run_mypy_analysis()
-        quality_issues.extend(mypy_issues)
-        
-        # 4. Radon for complexity analysis
-        complexity_issues = await self._run_complexity_analysis()
-        quality_issues.extend(complexity_issues)
-        
-        # 5. Dead code detection
-        dead_code_issues = await self._run_dead_code_analysis()
-        quality_issues.extend(dead_code_issues)
-        
+        logger.info(f"✅ Parallel quality analysis complete: {len(quality_issues)} issues found")
         return quality_issues
     
     async def _run_bandit_analysis(self) -> List[Dict[str, Any]]:
         """Run Bandit security analysis for Python files"""
         try:
-            cmd = ["bandit", "-r", str(self.project_root), "-f", "json", "-ll"]
+            # Apply gitignore filtering if available
+            if self.gitignore_filter:
+                # Get Python files that should be analyzed
+                python_files = []
+                for py_file in self.project_root.rglob("*.py"):
+                    if not self.gitignore_filter.should_exclude(py_file):
+                        python_files.append(str(py_file))
+                
+                if not python_files:
+                    logger.info("🚫 No Python files to analyze after gitignore filtering")
+                    return []
+                
+                # Run Bandit on specific files
+                cmd = ["bandit"] + python_files + ["-f", "json", "-ll"]
+            else:
+                # Fallback to scanning the entire directory
+                cmd = ["bandit", "-r", str(self.project_root), "-f", "json", "-ll"]
+            
             result = await self._run_command(cmd)
             
             if result.returncode != 0 and result.returncode != 1:  # Bandit returns 1 if issues found
@@ -204,13 +264,19 @@ class EnhancedCodeAnalyzer:
     async def _run_pylint_analysis(self) -> List[Dict[str, Any]]:
         """Run Pylint analysis for code quality"""
         try:
-            # Find Python files
-            python_files = list(self.project_root.rglob("*.py"))
+            # Find Python files with gitignore filtering
+            python_files = []
+            for py_file in self.project_root.rglob("*.py"):
+                if not self.gitignore_filter or not self.gitignore_filter.should_exclude(py_file):
+                    python_files.append(py_file)
+            
             if not python_files:
+                logger.info("🚫 No Python files to analyze after gitignore filtering")
                 return []
             
-            # Limit to a reasonable number of files
+            # Limit to a reasonable number of files to avoid overwhelming pylint
             python_files = python_files[:50]
+            logger.info(f"🔍 Running Pylint on {len(python_files)} Python files")
             
             cmd = ["pylint", "--output-format=json", "--disable=C0111,C0103"] + [str(f) for f in python_files]
             result = await self._run_command(cmd)

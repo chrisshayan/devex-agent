@@ -374,6 +374,53 @@ async def get_analytics(developer_id: Optional[str] = None):
         logger.error(f"❌ Error getting analytics: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting analytics: {str(e)}")
 
+# === Performance Monitoring Endpoints ===
+
+@app.get("/api/v1/performance/stats")
+async def get_performance_stats():
+    """Get performance statistics for all operations"""
+    try:
+        from .knowledge_graph.utils.performance import get_performance_stats
+        stats = get_performance_stats()
+        return {
+            "status": "success",
+            "performance_stats": stats,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Error getting performance stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting performance stats: {str(e)}")
+
+@app.get("/api/v1/performance/cache")
+async def get_cache_stats():
+    """Get cache statistics"""
+    try:
+        from .knowledge_graph.utils.performance import get_cache_stats
+        stats = get_cache_stats()
+        return {
+            "status": "success",
+            "cache_stats": stats,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Error getting cache stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting cache stats: {str(e)}")
+
+@app.post("/api/v1/performance/cache/clear")
+async def clear_cache():
+    """Clear all cached data"""
+    try:
+        from .knowledge_graph.utils.performance import clear_cache
+        clear_cache()
+        return {
+            "status": "success",
+            "message": "Cache cleared successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Error clearing cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error clearing cache: {str(e)}")
+
 # === Sync and Maintenance Endpoints ===
 
 @app.post("/api/v1/knowledge-graph/sync-all")

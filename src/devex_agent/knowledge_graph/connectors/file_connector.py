@@ -11,6 +11,7 @@ from datetime import datetime
 import fnmatch
 
 from ..core.models import GoldenSourceConfig, FileSourceConfig
+from ..utils.gitignore_filter import create_gitignore_filter
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,11 @@ class FileConnector:
         # Resolve the path
         self.base_path = Path(self.file_config.path).expanduser().resolve()
         
+        # Initialize gitignore filter to respect project exclusions
+        self.gitignore_filter = create_gitignore_filter(self.base_path)
+        
         logger.info(f"🔌 File connector initialized for path: {self.base_path}")
+        logger.info(f"🚫 GitIgnore filter loaded {self.gitignore_filter.get_exclusion_stats()['total_patterns']} patterns")
     
     async def validate_config(self, config) -> bool:
         """Validate file system configuration"""
@@ -131,28 +136,32 @@ class FileConnector:
         return files
     
     def _should_include_file(self, file_path: Path) -> bool:
-        """Check if a file should be included based on patterns"""
+        """Check if a file should be included based on patterns and gitignore"""
         relative_path = file_path.relative_to(self.base_path)
         relative_str = str(relative_path)
         file_name = file_path.name
         
-        # Check exclude directories
+        # First check gitignore filter (respects .gitignore and common exclusions)
+        if self.gitignore_filter.should_exclude(file_path):
+            logger.debug(f"🚫 GitIgnore excluded: {relative_str}")
+            return False
+        
+        # Check exclude directories (additional to gitignore)
         for exclude_dir in self.file_config.exclude_directories:
             if exclude_dir in relative_path.parts:
+                logger.debug(f"🚫 Config excluded directory: {relative_str}")
                 return False
         
         # Check file extensions
         file_extension = file_path.suffix.lower()
         if self.file_config.include_extensions:
             if file_extension not in self.file_config.include_extensions:
+                logger.debug(f"🚫 Extension not in include list: {relative_str}")
                 return False
         
-        # Skip hidden files and common non-text files
-        if file_name.startswith('.'):
-            return False
-        
-        # Skip binary files (basic check)
-        if file_extension in ['.pyc', '.so', '.dll', '.exe', '.bin', '.jpg', '.png', '.gif', '.pdf', '.zip']:
+        # Skip hidden files (unless specifically included in gitignore negation)
+        if file_name.startswith('.') and not file_name.startswith('.gitignore'):
+            logger.debug(f"🚫 Hidden file: {relative_str}")
             return False
         
         # Skip very large files (>10MB)
