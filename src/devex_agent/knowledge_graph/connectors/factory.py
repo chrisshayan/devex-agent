@@ -1,11 +1,12 @@
 """
-Connector Factory - Creates appropriate connectors for different source types (Stub Implementation)
+Connector Factory - Creates appropriate connectors for different source types
 """
 
 import logging
 from typing import Dict, Any, Optional
 
 from ..core.models import GoldenSourceConfig, SourceType
+from .github_connector import GitHubConnector
 
 logger = logging.getLogger(__name__)
 
@@ -39,17 +40,41 @@ class ConnectorFactory:
     
     def create_connector(self, source_config: GoldenSourceConfig):
         """Create a connector for the given source configuration"""
-        logger.info(f"🔌 Creating connector for source type: {source_config.type} (stub)")
+        logger.info(f"🔌 Creating connector for source type: {source_config.type}")
         
-        # Stub implementation - would create actual connectors here
-        return StubConnector(source_config)
+        if source_config.type == SourceType.GITHUB:
+            return GitHubConnector(source_config)
+        elif source_config.type == SourceType.FILE:
+            # TODO: Implement FileConnector
+            logger.warning(f"FileConnector not yet implemented, using stub")
+            return StubConnector(source_config)
+        elif source_config.type == SourceType.CONFLUENCE:
+            # TODO: Implement ConfluenceConnector
+            logger.warning(f"ConfluenceConnector not yet implemented, using stub")
+            return StubConnector(source_config)
+        elif source_config.type == SourceType.DEEPWIKI:
+            # TODO: Implement DeepWikiConnector
+            logger.warning(f"DeepWikiConnector not yet implemented, using stub")
+            return StubConnector(source_config)
+        elif source_config.type == SourceType.MCP:
+            # TODO: Implement MCPConnector
+            logger.warning(f"MCPConnector not yet implemented, using stub")
+            return StubConnector(source_config)
+        else:
+            logger.warning(f"Unknown source type: {source_config.type}, using stub")
+            return StubConnector(source_config)
     
     async def get_connector(self, source_type: SourceType):
-        """Get a connector for the given source type (stub)"""
-        logger.info(f"🔌 Getting connector for source type: {source_type} (stub)")
+        """Get a connector for the given source type"""
+        logger.info(f"🔌 Getting connector for source type: {source_type}")
         
-        # Stub implementation - return a basic connector
-        return StubConnector(None)
+        if source_type == SourceType.GITHUB:
+            # For generic GitHub connector, create a minimal config
+            # This method is mainly used for validation
+            return StubConnector(None)  # Generic connector
+        else:
+            # Return stub for other types
+            return StubConnector(None)
 
 class StubConnector:
     """Stub connector that provides the interface without actual functionality"""

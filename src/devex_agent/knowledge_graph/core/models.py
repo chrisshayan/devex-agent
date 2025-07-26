@@ -247,3 +247,11 @@ class KnowledgeRelationship(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp") 
+
+class CodeEvaluationRequest(BaseModel):
+    """Request model for code evaluation"""
+    developer_id: str = Field(..., description="Developer identifier")
+    code_content: str = Field(..., description="Code content to evaluate")
+    file_path: Optional[str] = Field(None, description="File path of the code")
+    language: Optional[str] = Field(None, description="Programming language")
+    context: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional context") 

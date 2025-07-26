@@ -15,7 +15,7 @@ from .api.models import EventRequest, MorningBriefResponse
 from .knowledge_graph.core.service import KnowledgeGraphService
 from .knowledge_graph.core.models import (
     GoldenSourceConfig, KnowledgeQuery, SearchResults,
-    IngestionResult, EvaluationResult, IngestionJob
+    IngestionResult, EvaluationResult, IngestionJob, CodeEvaluationRequest
 )
 from .config.settings import get_settings
 
@@ -227,9 +227,12 @@ async def trigger_ingestion(source_id: str, background_tasks: BackgroundTasks, f
         logger.info(f"🚀 Triggering ingestion for source: {source_id}")
         
         # Run ingestion in background
-        def run_ingestion():
-            import asyncio
-            asyncio.create_task(knowledge_graph.ingest_source(source_id, force=force))
+        async def run_ingestion():
+            try:
+                await knowledge_graph.ingest_source(source_id, force=force)
+                logger.info(f"✅ Background ingestion completed for source: {source_id}")
+            except Exception as e:
+                logger.error(f"❌ Background ingestion failed for source {source_id}: {e}")
         
         background_tasks.add_task(run_ingestion)
         
@@ -302,23 +305,17 @@ async def get_contextual_knowledge(
         raise HTTPException(status_code=500, detail=f"Error getting contextual knowledge: {str(e)}")
 
 @app.post("/api/v1/knowledge-graph/evaluate")
-async def evaluate_code(
-    developer_id: str,
-    code_content: str,
-    file_path: Optional[str] = None,
-    language: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
-) -> EvaluationResult:
+async def evaluate_code(request: CodeEvaluationRequest) -> EvaluationResult:
     """Evaluate code against golden source patterns"""
     try:
-        logger.info(f"⚖️ Evaluating code for {developer_id}: {file_path}")
+        logger.info(f"⚖️ Evaluating code for {request.developer_id}: {request.file_path}")
         
         result = await knowledge_graph.evaluate_code_against_golden_sources(
-            developer_id=developer_id,
-            code_content=code_content,
-            file_path=file_path,
-            language=language,
-            context=context
+            developer_id=request.developer_id,
+            code_content=request.code_content,
+            file_path=request.file_path,
+            language=request.language,
+            context=request.context
         )
         return result
     except Exception as e:
