@@ -1,42 +1,51 @@
-[tool.poetry]
-name = "devex-agent"
-version = "0.1.0"
-description = "DevEx Ambient Agent for intelligent developer experience"
-authors = ["Your Name <you@example.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.9"
-fastapi = "^0.104.1"
-uvicorn = "^0.24.0"
-pydantic = "^2.5.0"
-httpx = "^0.25.2"
-python-multipart = "^0.0.6"
-watchdog = "^3.0.0"
-gitpython = "^3.1.40"
-psutil = "^5.9.6"
-langchain = "^0.1.0"
-langchain-openai = "^0.0.5"
-langchain-community = "^0.0.13"
-langchain-chroma = "^0.1.0"
-langgraph = "^0.0.26"
-# Security analysis tools
-bandit = "^1.7.5"
-safety = "^2.3.5"
-semgrep = "^1.45.0"
-# Code quality analysis tools
-pylint = "^3.0.3"
-flake8 = "^6.1.0"
-mypy = "^1.7.1"
-black = "^23.11.0"
-isort = "^5.12.0"
-# Additional analysis
-vulture = "^2.10"  # Dead code detection
-radon = "^6.0.1"   # Complexity analysis
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.3"
-pytest-asyncio = "^0.21.1"
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "devex-agent"
+version = "1.0.0"
+description = "DevEx Ambient Agent with Knowledge Graph for enhanced developer experience"
+authors = [{ name = "DevEx Team", email = "devex@company.com" }]
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.5.0",
+    "httpx>=0.25.2",
+    "python-multipart>=0.0.6",
+    "watchdog>=3.0.0",
+    "gitpython>=3.1.40",
+    "psutil>=5.9.6",
+    "langchain>=0.1.0",
+    "langchain-openai>=0.0.5",
+    "langchain-community>=0.0.13",
+    "langchain-chroma>=0.1.0",
+    "langgraph>=0.0.26",
+    "bandit>=1.7.5",
+    "safety>=3.0.0",
+    "semgrep>=1.45.0",
+    "pylint>=3.0.3",
+    "flake8>=6.1.0",
+    "mypy>=1.7.1",
+    "black>=23.11.0",
+    "isort>=5.12.0",
+    "vulture>=2.10",
+    "radon>=6.0.1",
+    "chromadb>=0.4.0",
+    "sentence-transformers>=2.2.0",
+    "neo4j>=5.0.0",
+    "psycopg2-binary>=2.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+]

@@ -1,0 +1,232 @@
+# Golden Sources Configuration Example
+# This file demonstrates how to configure various types of golden sources
+# for the DevEx Ambient Agent Knowledge Graph system
+
+# Golden Sources define the reference materials that the AI will use
+# to evaluate, inspire, and guide new code development
+
+golden_sources:
+  # 1. GitHub Repository - Company Backend Standards
+  - id: "company-backend-patterns"
+    type: "github"
+    config:
+      name: "Company Backend Standards"
+      description: "Official backend coding standards and patterns"
+      repository: "your-company/backend-standards"
+      branch: "main"
+      include_patterns: 
+        - "src/**/*.py"
+        - "docs/**/*.md"
+        - "examples/**/*"
+        - "*.md"
+      exclude_patterns:
+        - "tests/**/*"
+        - "*.pyc"
+        - "__pycache__/**/*"
+      access_token: "${GITHUB_ACCESS_TOKEN}"  # Use environment variable
+      include_issues: true
+      include_prs: true
+      include_wiki: true
+      tags: ["backend", "python", "standards"]
+    priority: "critical"
+    auto_sync: true
+    sync_interval: "1h"  # Sync every hour
+    enabled: true
+
+  # 2. Confluence - Architecture Decisions
+  - id: "architecture-decisions"
+    type: "confluence"
+    config:
+      name: "Architecture Decision Records"
+      description: "Company architecture decisions and patterns"
+      base_url: "https://yourcompany.atlassian.net"
+      space_key: "ARCH"
+      page_filter: "label = 'architecture-decision'"
+      username: "${CONFLUENCE_USERNAME}"
+      api_token: "${CONFLUENCE_API_TOKEN}"
+      include_attachments: true
+      include_comments: false
+      tags: ["architecture", "decisions", "patterns"]
+    priority: "high"
+    auto_sync: true
+    sync_interval: "6h"  # Sync every 6 hours
+    enabled: true
+
+  # 3. GitHub Repository - Security Best Practices
+  - id: "security-patterns"
+    type: "github"
+    config:
+      name: "Security Best Practices"
+      description: "Security patterns and safe coding practices"
+      repository: "your-company/security-patterns"
+      branch: "main"
+      include_patterns:
+        - "security-guides/**/*.md"
+        - "code-examples/**/*.py"
+        - "checklists/**/*.md"
+      exclude_patterns:
+        - "drafts/**/*"
+      access_token: "${GITHUB_ACCESS_TOKEN}"
+      include_issues: false
+      include_prs: false
+      include_wiki: false
+      tags: ["security", "patterns", "compliance"]
+    priority: "high"
+    auto_sync: true
+    sync_interval: "12h"
+    enabled: true
+
+  # 4. Local Files - Team Coding Standards
+  - id: "coding-standards"
+    type: "file"
+    config:
+      name: "Team Coding Standards"
+      description: "Local coding standards and style guides"
+      path: "/docs/team-standards"
+      include_extensions: [".md", ".txt", ".py"]
+      exclude_directories: [".git", "temp", "drafts"]
+      recursive: true
+      tags: ["standards", "style", "team"]
+    priority: "medium"
+    auto_sync: false  # Manual sync only
+    enabled: true
+
+  # 5. Confluence - API Documentation
+  - id: "api-documentation"
+    type: "confluence"
+    config:
+      name: "API Documentation"
+      description: "Company API documentation and examples"
+      base_url: "https://yourcompany.atlassian.net"
+      space_key: "API"
+      page_filter: "type = 'page' AND title ~ 'API'"
+      username: "${CONFLUENCE_USERNAME}"
+      api_token: "${CONFLUENCE_API_TOKEN}"
+      include_attachments: true
+      include_comments: true
+      tags: ["api", "documentation", "examples"]
+    priority: "medium"
+    auto_sync: true
+    sync_interval: "24h"  # Daily sync
+    enabled: true
+
+  # 6. DeepWiki - Technical Knowledge Base
+  - id: "tech-knowledge-base"
+    type: "deepwiki"
+    config:
+      name: "Technical Knowledge Base"
+      description: "Company technical wiki and knowledge sharing"
+      base_url: "https://wiki.yourcompany.com"
+      category_filter: "technology,development,patterns"
+      api_key: "${DEEPWIKI_API_KEY}"
+      include_media: true
+      tags: ["wiki", "knowledge", "technical"]
+    priority: "medium"
+    auto_sync: true
+    sync_interval: "12h"
+    enabled: true
+
+  # 7. MCP - Custom Knowledge Source
+  - id: "custom-knowledge-source"
+    type: "mcp"
+    config:
+      name: "Custom Knowledge Connector"
+      description: "Custom MCP-based knowledge source"
+      mcp_server: "custom-knowledge-server"
+      connection_config:
+        server_url: "https://knowledge.yourcompany.com"
+        auth_token: "${CUSTOM_KNOWLEDGE_TOKEN}"
+        timeout: 30
+      tools: ["search_knowledge", "get_document", "list_categories"]
+      tags: ["custom", "mcp", "knowledge"]
+    priority: "low"
+    auto_sync: true
+    sync_interval: "24h"
+    enabled: false  # Disabled by default
+
+  # 8. GitHub Repository - Frontend Patterns
+  - id: "frontend-patterns"
+    type: "github"
+    config:
+      name: "Frontend Patterns and Components"
+      description: "React/TypeScript patterns and reusable components"
+      repository: "your-company/frontend-patterns"
+      branch: "main"
+      include_patterns:
+        - "src/components/**/*.tsx"
+        - "src/patterns/**/*.ts"
+        - "docs/**/*.md"
+        - "storybook/**/*.stories.tsx"
+      exclude_patterns:
+        - "**/*.test.tsx"
+        - "**/*.spec.ts"
+        - "dist/**/*"
+        - "node_modules/**/*"
+      access_token: "${GITHUB_ACCESS_TOKEN}"
+      include_issues: true
+      include_prs: true
+      include_wiki: false
+      tags: ["frontend", "react", "typescript", "components"]
+    priority: "high"
+    auto_sync: true
+    sync_interval: "2h"
+    enabled: true
+
+  # 9. Local Files - Database Patterns
+  - id: "database-patterns"
+    type: "file"
+    config:
+      name: "Database Design Patterns"
+      description: "SQL patterns, migration examples, and database design guidelines"
+      path: "/docs/database"
+      include_extensions: [".sql", ".md", ".txt"]
+      exclude_directories: ["temp", "backup"]
+      recursive: true
+      tags: ["database", "sql", "patterns", "migrations"]
+    priority: "medium"
+    auto_sync: false
+    enabled: true
+
+  # 10. Confluence - Deployment Guides
+  - id: "deployment-guides"
+    type: "confluence"
+    config:
+      name: "Deployment and DevOps Guides"
+      description: "Deployment patterns, CI/CD configurations, and infrastructure guides"
+      base_url: "https://yourcompany.atlassian.net"
+      space_key: "DEVOPS"
+      page_filter: "label in ('deployment', 'cicd', 'infrastructure')"
+      username: "${CONFLUENCE_USERNAME}"
+      api_token: "${CONFLUENCE_API_TOKEN}"
+      include_attachments: true
+      include_comments: false
+      tags: ["devops", "deployment", "cicd", "infrastructure"]
+    priority: "medium"
+    auto_sync: true
+    sync_interval: "12h"
+    enabled: true
+
+# Global Configuration
+global_settings:
+  # Default sync behavior
+  default_sync_interval: "6h"
+  max_concurrent_syncs: 3
+  
+  # Content processing
+  max_file_size_mb: 10
+  supported_languages: ["python", "javascript", "typescript", "java", "kotlin", "go", "rust"]
+  
+  # Quality thresholds
+  min_similarity_threshold: 0.7
+  max_results_per_search: 20
+  
+  # Storage retention
+  max_items_per_source: 10000
+  retention_days: 365
+
+# Environment Variables Required:
+# - GITHUB_ACCESS_TOKEN: GitHub personal access token
+# - CONFLUENCE_USERNAME: Confluence username/email
+# - CONFLUENCE_API_TOKEN: Confluence API token
+# - DEEPWIKI_API_KEY: DeepWiki API key (if using DeepWiki)
+# - CUSTOM_KNOWLEDGE_TOKEN: Custom knowledge source token (if using custom MCP) 
