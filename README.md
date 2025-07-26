@@ -1,4 +1,4 @@
-# DevEx Ambient Agent with Knowledge Graph
+# DevEx Ambient Agent with Advanced Knowledge Graph
 
 <div align="center">
 
@@ -8,8 +8,9 @@
 [![LangChain](https://img.shields.io/badge/LangChain-Latest-purple.svg)](https://langchain.com)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Enabled-purple)
 [![Neo4J](https://img.shields.io/badge/Neo4j-008CC1?logo=neo4j&logoColor=white)](#)
+![Knowledge Graph](https://img.shields.io/badge/Knowledge%20Graph-Advanced-green)
 
-An intelligent ambient agent that proactively analyzes code and provides morning briefings with actionable insights, enhanced with a sophisticated Knowledge Graph system for golden source reference and code evaluation.
+An intelligent ambient agent that proactively analyzes code and provides morning briefings with actionable insights, enhanced with a sophisticated **Advanced Knowledge Graph system** featuring state-of-the-art relationship discovery and pattern detection algorithms.
 
 [🚀 Quick Start](#-quick-start) •
 [📖 Documentation](#-documentation) •
@@ -47,20 +48,42 @@ An intelligent ambient agent that proactively analyzes code and provides morning
 
 ### 🌟 Core Ambient Agent
 
-- **🌅 Morning Brief Generation**: Intelligent daily summaries using LangGraph workflows
-- **🔬 Enhanced Code Analysis**: Real-world security and quality analysis with professional tools
-- **📊 Pattern Detection**: Advanced AI-powered pattern recognition and anomaly detection
+- **🌅 Enhanced Morning Brief Generation**: Intelligent daily summaries using LangGraph workflows **with Knowledge Graph insights**
+- **🔬 Professional Code Analysis**: Real-world security and quality analysis with industry-standard tools
+- **📊 AI-Powered Pattern Detection**: Advanced LLM-based pattern recognition and anomaly detection
 - **🔄 Event-Driven Architecture**: Seamless integration with IDEs and development tools
 - **⚡ Real-time Processing**: Ambient event processing with intelligent prioritization
 
-### 🧠 Knowledge Graph System
+### 🧠 Advanced Knowledge Graph System
 
+#### **🚀 NEW: Advanced Relationship Discovery Engine**
+- **🕸️ Multi-Algorithm Relationship Detection**: 
+  - **Code Dependencies**: AST-based import analysis, function call mapping
+  - **Semantic Similarities**: Vector embedding-based content matching  
+  - **Design Pattern Detection**: Singleton, Factory, Observer, Strategy, Decorator patterns
+  - **Cross-References**: Documentation-to-code and issue-to-code linking
+  - **Hierarchical Relationships**: Class inheritance and composition analysis
+  - **Temporal Evolution**: Version superseding and evolution tracking
+
+#### **📊 Graph Analysis Algorithms**
+- **Centrality Metrics**: Identify the most important/connected entities
+- **Community Detection**: Find clusters of related functionality
+- **Influence Analysis**: Understanding which patterns influence others
+- **Path Analysis**: Shortest paths and relationship strength calculations
+
+#### **🎯 Intelligent Code Evaluation & Context**
 - **📚 Golden Source Management**: Register GitHub repos, Confluence pages, DeepWiki content, and text files
-- **🔍 Semantic Search**: Vector-based search across all knowledge sources using ChromaDB
-- **🎯 Contextual Code Evaluation**: Compare new code against established patterns and best practices
-- **🔗 Relationship Mapping**: Understand dependencies, similarities, and conflicts between code patterns
-- **⚡ Real-time Context**: Receive relevant knowledge precisely when and where you need it
-- **🤖 Intelligent Recommendations**: Get suggestions based on proven patterns from golden sources
+- **🔍 Advanced Semantic Search**: Multi-collection vector search with relationship enrichment
+- **🎯 Pattern-Aware Code Evaluation**: Compare new code against established patterns with confidence scoring
+- **🔗 Intelligent Relationship Mapping**: Understand dependencies, similarities, and conflicts between code patterns
+- **⚡ Context-Aware Recommendations**: Receive relevant knowledge precisely when and where you need it
+- **🤖 Golden Source Alignment**: Track how well your code aligns with organizational standards
+
+#### **🚀 Enhanced Morning Brief Integration**
+- **📊 Golden Source Alignment Scores**: How well recent changes follow established patterns
+- **🔍 Pattern-Based Insights**: Recommendations based on similar code patterns from golden sources
+- **📚 Contextual Documentation**: Relevant docs and examples for current development context
+- **🎯 Relationship-Aware Suggestions**: Guidance based on code relationships and dependencies
 
 ### 🛡️ Advanced Code Analysis
 
@@ -68,7 +91,7 @@ An intelligent ambient agent that proactively analyzes code and provides morning
 - **📏 Quality Metrics**: Pylint, Flake8, MyPy for code quality and style analysis
 - **📈 Complexity Analysis**: Radon for cyclomatic complexity measurement
 - **🧹 Dead Code Detection**: Vulture for unused code identification
-- **📄 File-Level Details**: Specific file paths, line numbers, and issue descriptions
+- **📄 Enhanced Reporting**: File-level details with line numbers, severity levels, and actionable insights
 
 ---
 
@@ -82,186 +105,219 @@ graph TB
         CLI[CLI Interface]
     end
 
-    subgraph "Knowledge Graph Core"
+    subgraph "Enhanced Ambient Orchestrator"
+        AO[Ambient Orchestrator]
+        MB[Morning Brief Workflow]
+        KGI[Knowledge Graph Integration]
+    end
+
+    subgraph "🚀 Advanced Knowledge Graph Core"
         KGS[Knowledge Graph Service]
-        ISE[Ingestion & Search Engine]
-        REL[Relationship Engine]
+        SE[Enhanced Search Engine]
+        RE[🆕 Relationship Engine]
+        ISE[Ingestion Engine]
         EMB[Embedding Service]
+    end
+
+    subgraph "🧠 Relationship Discovery"
+        CD[Code Dependencies]
+        SS[Semantic Similarities]
+        PD[Pattern Detection]
+        CR[Cross-References]
+        HR[Hierarchical Relations]
+        TE[Temporal Evolution]
     end
 
     subgraph "Source Connectors"
         GHC[GitHub Connector]
-        CONF[Confluence Connector]
-        DWC[DeepWiki Connector]
         FC[File Connector]
-        MCP[MCP Adapters]
+        CONF[Confluence Connector*]
+        DWC[DeepWiki Connector*]
+        MCP[MCP Adapters*]
     end
 
     subgraph "Storage Layer"
-        VDB[(Vector Database<br/>ChromaDB)]
-        GDB[(Graph Database<br/>Neo4j)]
-        RDB[(Relational Database<br/>PostgreSQL)]
-        CACHE[(Redis Cache)]
+        VDB[(Vector Store<br/>ChromaDB)]
+        GDB[(Graph Store<br/>Neo4j + Fallback)]
+        RDB[(Relational Store<br/>PostgreSQL/SQLite)]
     end
 
-    subgraph "AI & Analytics"
-        LLM[LLM Service<br/>OpenAI/Claude]
-        ANA[Code Analyzer]
-        PAT[Pattern Engine]
-        SIM[Similarity Engine]
-    end
-
-    subgraph "Integration Layer"
-        AMB[Ambient Orchestrator]
-        WF[LangGraph Workflows]
-        EVT[Event Bus]
+    subgraph "🛡️ Enhanced Analysis Tools"
+        SEC[Security Tools<br/>Bandit, Safety, Semgrep]
+        QUA[Quality Tools<br/>Pylint, Flake8, MyPy]
+        COM[Complexity Tools<br/>Radon, Vulture]
     end
 
     IDE --> API
-    API --> KGS
+    API --> AO
+    AO --> MB
+    MB --> KGI
+    KGI --> KGS
+    
+    KGS --> SE
+    KGS --> RE
     KGS --> ISE
-    KGS --> REL
-    KGS --> EMB
-
+    
+    RE --> CD
+    RE --> SS  
+    RE --> PD
+    RE --> CR
+    RE --> HR
+    RE --> TE
+    
     ISE --> GHC
-    ISE --> CONF
-    ISE --> DWC
     ISE --> FC
-    ISE --> MCP
-
-    KGS --> VDB
-    KGS --> GDB
+    ISE --> CONF
+    
+    SE --> VDB
+    RE --> GDB
     KGS --> RDB
-    KGS --> CACHE
+    
+    AO --> SEC
+    AO --> QUA
+    AO --> COM
 
-    KGS --> LLM
-    KGS --> ANA
-    KGS --> PAT
-    KGS --> SIM
-
-    KGS --> AMB
-    AMB --> WF
-    WF --> EVT
+    classDef new fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef enhanced fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    
+    class RE,CD,SS,PD,CR,HR,TE new
+    class KGI,SE,ISE,SEC,QUA,COM enhanced
 ```
+
+### 🔗 Relationship Types Discovered
+
+The Advanced Relationship Engine discovers and analyzes **8 distinct relationship types**:
+
+| Relationship Type | Description | Use Cases |
+|------------------|-------------|-----------|
+| **DEPENDS_ON** | Code imports, function calls, dependencies | Impact analysis, refactoring guidance |
+| **SIMILAR_TO** | Semantically related content | Code reuse, pattern discovery |
+| **IMPLEMENTS** | Design pattern implementations | Architecture consistency |
+| **RELATED_TO** | Cross-references (docs ↔ code, issues ↔ code) | Knowledge linking, documentation gaps |
+| **INHERITS_FROM** | Class inheritance, interface implementation | Hierarchy analysis, OOP insights |
+| **SUPERSEDES** | Temporal evolution, version relationships | Change tracking, deprecation |
+| **INSPIRED_BY** | Influence and derivation patterns | Learning paths, best practice adoption |
+| **CONTRADICTS** | Conflicting implementations *(planned)* | Consistency checking, conflict resolution |
 
 ---
 
 ## 🔧 Technology Stack
 
-### Backend & AI
-- **Python 3.9+** with FastAPI for high-performance APIs
-- **uv** for blazing-fast dependency management and virtual environments
-- **LangChain & LangGraph** for AI workflows and agentic patterns
-- **OpenAI GPT-4** / **Claude** for LLM capabilities
-- **ChromaDB / Qdrant** for vector storage and semantic search
-- **Neo4j** for graph relationships and knowledge mapping
-- **PostgreSQL** for structured data and metadata
+### Core Technologies
+- **Python 3.9+** - Primary development language
+- **uv** - Modern, fast dependency management (migrated from Poetry)
+- **FastAPI** - High-performance async web framework
+- **LangChain & LangGraph** - Advanced AI workflow orchestration
+- **Pydantic** - Data validation and serialization
 
-### Analysis Tools
-- **Bandit** for Python security analysis
-- **Safety** for dependency vulnerability checking
-- **Semgrep** for multi-language security patterns
-- **Pylint, Flake8, MyPy** for comprehensive code analysis
-- **Radon** for complexity analysis
-- **Vulture** for dead code detection
+### Knowledge Graph & AI
+- **ChromaDB** - Vector database for semantic search and embeddings
+- **Neo4j** - Graph database for relationship storage (with in-memory fallback)
+- **SentenceTransformers** - Text embedding generation (`all-MiniLM-L6-v2`)
+- **OpenAI API** - LLM integration for intelligent analysis
+- **Advanced Graph Algorithms** - Custom relationship discovery and analysis
 
-### Integration & Infrastructure
-- **Model Context Protocol (MCP)** for extensible connectors
-- **Docker** for containerization
-- **Redis** for caching and session management
-- **IntelliJ Platform SDK** for IDE integration
+### Code Analysis Tools
+- **Security**: Bandit, Safety, Semgrep
+- **Quality**: Pylint, Flake8, MyPy
+- **Complexity**: Radon (cyclomatic complexity)
+- **Dead Code**: Vulture
+- **AST Analysis** - Python Abstract Syntax Tree parsing for dependency detection
+
+### Source Integration
+- **GitHub API** - Repository content and metadata ingestion
+- **File System** - Local file and directory scanning
+- **HTTP/REST** - Generic connector framework
+- **Future**: Confluence, DeepWiki, MCP protocol adapters
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+- Python 3.9+
+- [uv](https://github.com/astral-sh/uv) for dependency management
+- Git
+- Optional: Neo4j for advanced graph features
 
-- **Python 3.9+**
-- **Node.js 16+** (for IntelliJ plugin development)
-- **Docker** (recommended for database services)
-- **OpenAI API key** (optional, for enhanced LLM features)
-
-### 30-Second Setup
-
+### Installation
 ```bash
-# 1. Clone and enter directory
+# Clone the repository
 git clone https://github.com/your-org/devex-agent.git
 cd devex-agent
 
-# 2. Install dependencies with uv
+# Install dependencies with uv
 uv sync
 
-# 3. Set API key (optional)
-export OPENAI_API_KEY="your-api-key"
+# Set up environment
+cp env.example .env
+# Edit .env with your configuration (OpenAI API key, etc.)
 
-# 4. Start the agent
+# Start the agent
 uv run python -m devex_agent.main
 ```
 
-### Register Your First Golden Source
-
+### First Knowledge Graph Setup
 ```bash
-curl -X POST http://localhost:8000/api/v1/knowledge-graph/sources \
+# Register your first golden source (local files)
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/sources" \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "github",
+    "type": "file",
     "config": {
-      "name": "Company Standards",
-      "repository": "your-org/coding-standards",
-      "branch": "main"
+      "name": "My Project Code",
+      "description": "Local codebase for analysis",
+      "path": "/path/to/your/project",
+      "include_extensions": [".py", ".js", ".md"],
+      "recursive": true
     },
-    "priority": "high"
+    "priority": "high",
+    "enabled": true
   }'
-```
 
-### Get Your Morning Brief
+# Trigger content ingestion and relationship discovery
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/sources/{source_id}/ingest?force=true"
 
-```bash
-curl http://localhost:8000/brief/morning/your-dev-id@company.com
+# Get your enhanced morning brief
+curl "http://localhost:8000/brief/morning/your_developer_id"
 ```
 
 ---
 
 ## ⚙️ Installation
 
-### Option 1: Full Installation with Docker
-
+### Full Installation (Recommended)
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/your-org/devex-agent.git
 cd devex-agent
 
-# Start databases with Docker Compose
-docker-compose up -d postgres neo4j redis
-
-# Install all dependencies with uv
+# Install with all dependencies
 uv sync
 
-# Start the agent
-uv run python -m devex_agent.main
+# Install enhanced analysis tools
+uv run bandit --version  # Verify security tools
+uv run pylint --version  # Verify quality tools
+
+# Optional: Install Neo4j for advanced graph features
+# See: https://neo4j.com/docs/operations-manual/current/installation/
 ```
 
-### Option 2: Minimal Installation
-
+### Minimal Installation
 ```bash
-# Install uv if not already installed
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# Core features only
+uv sync --no-dev
 
-# Install core dependencies
-uv sync
-
-# Start with basic configuration (uses SQLite and mock graph DB)
-uv run python -m devex_agent.main
+# Basic analysis tools
+pip install bandit safety
 ```
 
-### Option 3: Development Installation
-
+### Development Installation
 ```bash
-# Install all dependencies including development tools
-uv sync --dev
+# Full development environment
+uv sync --group dev
 
-# Install pre-commit hooks (if using)
+# Install pre-commit hooks
 uv run pre-commit install
 
 # Run tests
@@ -272,71 +328,108 @@ uv run pytest tests/
 
 ## 📚 Knowledge Graph Setup
 
-### Supported Golden Source Types
+### Supported Source Types
 
-| Source Type | Description | Use Cases |
-|-------------|-------------|-----------|
-| **GitHub** | Repositories, issues, PRs, wikis | Code standards, examples, documentation |
-| **Confluence** | Pages, spaces, attachments | Architecture decisions, processes |
-| **DeepWiki** | Wiki pages and content | Technical knowledge bases |
-| **Local Files** | Text, markdown, code files | Team-specific standards |
-| **MCP Connectors** | Custom sources via MCP | Extensible integrations |
+#### 🐙 GitHub Repositories
+```json
+{
+  "type": "github",
+  "config": {
+    "name": "FastAPI Core",
+    "repository": "tiangolo/fastapi",
+    "branch": "main",
+    "include_patterns": ["*.py", "*.md"],
+    "exclude_patterns": ["test_*", "*/tests/*"],
+    "access_token": "github_pat_...",
+    "include_issues": true,
+    "include_prs": true
+  }
+}
+```
+
+#### 📁 Local File Systems
+```json
+{
+  "type": "file", 
+  "config": {
+    "name": "Project Documentation",
+    "path": "/path/to/docs",
+    "include_extensions": [".md", ".rst", ".txt"],
+    "exclude_directories": [".git", "node_modules"],
+    "recursive": true
+  }
+}
+```
+
+#### 🌐 Confluence Spaces *(Coming Soon)*
+```json
+{
+  "type": "confluence",
+  "config": {
+    "name": "Team Wiki",
+    "base_url": "https://company.atlassian.net/wiki",
+    "space_key": "DEV",
+    "username": "user@company.com",
+    "api_token": "..."
+  }
+}
+```
 
 ### Environment Configuration
 
-Create a `.env` file in the project root:
-
-```bash
-# Core Agent Configuration
-OPENAI_API_KEY=your_openai_api_key_here
-HOST=localhost
-PORT=8000
-DEBUG=true
-
-# Knowledge Graph Configuration
-KG_VECTOR_STORE_PATH=./data/vector_store
-KG_GRAPH_DATABASE_URL=bolt://localhost:7687
-KG_RELATIONAL_DATABASE_URL=postgresql://user:pass@localhost:5432/devex
-
-# Source Connector Tokens
-GITHUB_ACCESS_TOKEN=your_github_token
-CONFLUENCE_USERNAME=your_confluence_username
-CONFLUENCE_API_TOKEN=your_confluence_api_token
-DEEPWIKI_API_KEY=your_deepwiki_api_key
-```
-
-### Golden Sources Configuration
-
-Create `config/golden-sources.yaml` (see [config/golden-sources-example.yaml](config/golden-sources-example.yaml)):
+Create a `config/golden-sources.yaml`:
 
 ```yaml
-golden_sources:
-  - id: "company-backend-patterns"
+# Golden Sources Configuration
+sources:
+  - id: "fastapi-reference"
     type: "github"
     config:
-      name: "Company Backend Standards"
-      repository: "your-company/backend-standards"
+      name: "FastAPI Reference Implementation"
+      repository: "tiangolo/fastapi"
       branch: "main"
-      include_patterns: ["src/**/*.py", "docs/**/*.md"]
-      exclude_patterns: ["tests/**/*"]
+      include_patterns: ["*.py"]
+      include_issues: true
     priority: "high"
     auto_sync: true
     sync_interval: "6h"
-    enabled: true
 
-  - id: "architecture-decisions"
-    type: "confluence"
+  - id: "team-standards"
+    type: "file"
     config:
-      name: "Architecture Decision Records"
-      base_url: "https://yourcompany.atlassian.net"
-      space_key: "ARCH"
-      page_filter: "label = 'architecture-decision'"
-      username: "${CONFLUENCE_USERNAME}"
-      api_token: "${CONFLUENCE_API_TOKEN}"
-    priority: "high"
-    auto_sync: true
-    sync_interval: "1d"
-    enabled: true
+      name: "Team Coding Standards"
+      path: "./docs/standards"
+      recursive: true
+      include_extensions: [".md", ".py"]
+    priority: "critical"
+    auto_sync: false
+
+# Global settings
+settings:
+  default_similarity_threshold: 0.7
+  max_results_per_search: 10
+  enable_relationship_discovery: true
+  relationship_discovery_depth: 3
+```
+
+### Advanced Relationship Discovery Configuration
+
+```python
+# Relationship Engine Settings
+RELATIONSHIP_ENGINE_CONFIG = {
+    "similarity_threshold": 0.7,      # Semantic similarity cutoff
+    "pattern_threshold": 0.6,         # Design pattern detection cutoff  
+    "dependency_confidence": 0.5,     # Code dependency confidence
+    "enable_caching": True,           # Performance optimization
+    "algorithms": {
+        "code_dependencies": True,     # AST-based analysis
+        "semantic_similarity": True,   # Vector embeddings
+        "design_patterns": True,       # Pattern recognition
+        "cross_references": True,      # Doc-code linking
+        "hierarchical": True,          # Inheritance analysis
+        "temporal": True               # Evolution tracking
+    }
+}
 ```
 
 ---
@@ -345,372 +438,447 @@ golden_sources:
 
 ### Install Analysis Tools
 
-All analysis tools are already included in the uv dependencies. Simply run:
+The agent integrates with professional code analysis tools:
 
 ```bash
-# Install all dependencies including analysis tools
-uv sync
+# Security Analysis
+uv run pip install bandit safety semgrep
 
-# Optional: Semgrep (requires separate installation)
-# See: https://semgrep.dev/docs/getting-started/
+# Quality Analysis  
+uv run pip install pylint flake8 mypy
+
+# Complexity Analysis
+uv run pip install radon vulture
+
+# Verify installations
+uv run bandit --version
+uv run safety --version
+uv run pylint --version
 ```
 
 ### Test Enhanced Analysis
 
 ```bash
-# Create sample files with intentional issues
-python demo_enhanced_analysis.py --create-samples
-
-# Run analysis demo
-python demo_enhanced_analysis.py
-```
-
-### Expected Enhanced Output
-
-**Before:** `"Found 28 security issues"`
-
-**After:**
-```json
-{
-  "critical_items": [
-    {
-      "type": "security",
-      "title": "Security concerns detected",
-      "count": 4,
-      "files": [
-        {
-          "file_path": "src/auth/service.py",
-          "line_number": 45,
-          "description": "Hardcoded password in dictionary",
-          "severity": "high",
-          "rule_id": "B105",
-          "tool": "bandit"
-        }
-      ]
-    }
-  ]
-}
+# Run enhanced analysis on current project
+uv run python -c "
+from src.devex_agent.workflows.enhanced_code_analyzer import run_enhanced_analysis
+import asyncio
+result = asyncio.run(run_enhanced_analysis('.'))
+print(f'Found {len(result[\"security_issues\"])} security issues')
+print(f'Found {len(result[\"quality_issues\"])} quality issues')
+"
 ```
 
 ---
 
 ## 🎯 Usage Examples
 
-### Enhanced Morning Brief with Knowledge Graph
+### Morning Brief with Knowledge Graph Insights
 
+```bash
+# Get enhanced morning brief
+curl "http://localhost:8000/brief/morning/alice@company.com"
+```
+
+**Response includes**:
 ```json
 {
   "developer_id": "alice@company.com",
-  "generated_at": "2024-01-15T08:00:00Z",
-  "summary": "Good morning! Your recent auth service changes align well with company patterns.",
-  "golden_source_evaluation": {
-    "alignment_score": 0.87,
-    "pattern_matches": [
+  "summary": "Good morning! Your recent changes align 85% with golden source patterns...",
+  "knowledge_graph_insights": {
+    "golden_source_alignment": 0.85,
+    "pattern_matches_count": 12,
+    "top_pattern_matches": [
       {
-        "pattern": "JWT Authentication Pattern",
-        "source": "company/backend-standards",
+        "pattern_name": "FastAPI Route Pattern",
+        "source_id": "fastapi-reference", 
         "confidence": 0.92,
-        "reference_file": "src/auth/jwt_service.py"
+        "description": "Similar endpoint structure found in FastAPI docs"
       }
     ],
-    "recommendations": [
-      {
-        "type": "enhancement",
-        "description": "Consider adding rate limiting as shown in golden source",
-        "reference": "company/backend-standards/src/auth/rate_limiter.py"
-      }
-    ]
+    "relevant_documentation_count": 3,
+    "recommendations_count": 5,
+    "coverage_gaps_count": 2
   },
-  "critical_items": [
+  "suggestions": [
     {
-      "type": "security",
-      "title": "Security concerns detected",
-      "files": [
-        {
-          "file_path": "src/config.py",
-          "line_number": 12,
-          "description": "Hardcoded password detected",
-          "severity": "high",
-          "tool": "bandit"
-        }
-      ]
+      "type": "knowledge_graph",
+      "title": "Consider FastAPI dependency injection pattern",
+      "description": "Your authentication code could benefit from FastAPI's dependency injection",
+      "priority": "medium",
+      "source": "code_evaluation"
     }
   ]
 }
 ```
 
-### Contextual Code Evaluation
+### Advanced Code Evaluation
 
 ```bash
-# Evaluate code against golden sources
-curl -X POST http://localhost:8000/api/v1/knowledge-graph/evaluate \
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/evaluate" \
   -H "Content-Type: application/json" \
   -d '{
     "developer_id": "alice@company.com",
-    "code_content": "def authenticate_user(token):\n    return validate_jwt(token)",
-    "file_path": "src/auth/service.py",
+    "code_content": "async def get_user(db: Session, user_id: int):\n    return db.query(User).filter(User.id == user_id).first()",
+    "file_path": "api/users.py",
     "language": "python"
   }'
 ```
 
-### Semantic Knowledge Search
+**Response**:
+```json
+{
+  "overall_alignment_score": 0.78,
+  "pattern_matches": [
+    {
+      "pattern_name": "SQLAlchemy Query Pattern",
+      "confidence": 0.85,
+      "similarity_score": 0.92,
+      "description": "Matches established database query patterns"
+    }
+  ],
+  "recommendations": [
+    {
+      "type": "enhancement", 
+      "title": "Add error handling",
+      "description": "Consider adding try-catch for database errors",
+      "priority": "medium"
+    }
+  ],
+  "quality_score": 0.82,
+  "security_score": 0.75,
+  "maintainability_score": 0.88
+}
+```
+
+### Semantic Search with Relationships
 
 ```bash
-# Search across all golden sources
-curl -X POST http://localhost:8000/api/v1/knowledge-graph/search \
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/search" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "JWT authentication best practices",
-    "developer_id": "alice@company.com",
-    "current_file": "src/auth/jwt_service.py",
-    "language": "python",
-    "max_results": 5
+    "query": "authentication middleware implementation",
+    "developer_id": "alice@company.com", 
+    "max_results": 5,
+    "include_relationships": true,
+    "similarity_threshold": 0.6
   }'
+```
+
+### Relationship Discovery
+
+```bash
+# Trigger relationship discovery for a source
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/sources/{source_id}/discover-relationships"
+
+# Get relationships for an entity  
+curl "http://localhost:8000/api/v1/knowledge-graph/relationships/{entity_id}"
+```
+
+**Response**:
+```json
+{
+  "entity_id": "auth_middleware_py_123",
+  "relationships": [
+    {
+      "target_entity_id": "user_model_py_456", 
+      "relationship_type": "DEPENDS_ON",
+      "strength": 0.9,
+      "description": "Imports User model for authentication",
+      "metadata": {
+        "dependency_type": "import",
+        "language": "python",
+        "source_line": 3
+      }
+    },
+    {
+      "target_entity_id": "jwt_utils_py_789",
+      "relationship_type": "SIMILAR_TO", 
+      "strength": 0.78,
+      "description": "Similar JWT token handling patterns"
+    }
+  ]
+}
 ```
 
 ### IntelliJ Plugin Integration
 
-```kotlin
-// Auto-trigger knowledge graph suggestions
-class CodeAssistantAction : AnAction() {
-    override fun actionPerformed(event: AnActionEvent) {
-        val context = DevelopmentContext(
-            currentFile = event.getData(CommonDataKeys.PSI_FILE)?.name,
-            selectedCode = event.getData(CommonDataKeys.EDITOR)?.selectionModel?.selectedText,
-            language = "python"
-        )
-        
-        val suggestions = knowledgeGraphService.getContextualSuggestions(context)
-        showSuggestionsPopup(suggestions)
-    }
-}
-```
+The enhanced morning brief and Knowledge Graph insights are automatically available in your IntelliJ IDE through the DevEx plugin:
+
+1. **Morning Brief Panel**: View golden source alignment and recommendations
+2. **Context-Aware Suggestions**: Get real-time suggestions based on current file
+3. **Pattern Recognition**: Highlight code patterns that match golden sources
+4. **Relationship Visualization**: See how your current code relates to other components
 
 ---
 
 ## 📖 API Reference
 
-### Core Endpoints
+### Enhanced Knowledge Graph Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/` | Health check |
-| `POST` | `/events/ingest` | Ingest development events |
-| `GET` | `/brief/morning/{developer_id}` | Generate morning brief |
-| `GET` | `/status/{developer_id}` | Get agent status |
+#### Core Operations
+- `POST /api/v1/knowledge-graph/sources` - Register golden source
+- `GET /api/v1/knowledge-graph/sources` - List all sources  
+- `POST /api/v1/knowledge-graph/sources/{id}/ingest` - Trigger ingestion
+- `DELETE /api/v1/knowledge-graph/sources/{id}` - Remove source
 
-### Knowledge Graph Endpoints
+#### Advanced Search & Evaluation
+- `POST /api/v1/knowledge-graph/search` - Semantic search with relationships
+- `POST /api/v1/knowledge-graph/evaluate` - Code evaluation against golden sources
+- `GET /api/v1/knowledge-graph/context/{developer_id}` - Get contextual knowledge
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/knowledge-graph/sources` | Register golden source |
-| `GET` | `/api/v1/knowledge-graph/sources` | List all sources |
-| `GET` | `/api/v1/knowledge-graph/sources/{id}` | Get specific source |
-| `PUT` | `/api/v1/knowledge-graph/sources/{id}` | Update source |
-| `DELETE` | `/api/v1/knowledge-graph/sources/{id}` | Remove source |
-| `POST` | `/api/v1/knowledge-graph/sources/{id}/ingest` | Trigger ingestion |
-| `GET` | `/api/v1/knowledge-graph/sources/{id}/health` | Check source health |
-| `POST` | `/api/v1/knowledge-graph/search` | Search knowledge |
-| `GET` | `/api/v1/knowledge-graph/context/{developer_id}` | Get contextual knowledge |
-| `POST` | `/api/v1/knowledge-graph/evaluate` | Evaluate code |
-| `POST` | `/api/v1/knowledge-graph/sync-all` | Sync all sources |
+#### 🚀 NEW: Relationship Discovery
+- `POST /api/v1/knowledge-graph/sources/{id}/discover-relationships` - Trigger relationship discovery
+- `GET /api/v1/knowledge-graph/relationships/{entity_id}` - Get entity relationships
+- `GET /api/v1/knowledge-graph/relationships/{entity_id}/paths` - Find relationship paths
+- `GET /api/v1/knowledge-graph/analytics/centrality` - Get centrality metrics
+- `GET /api/v1/knowledge-graph/analytics/communities` - Get community clusters
 
-### Example API Usage
+#### Enhanced Morning Brief
+- `GET /brief/morning/{developer_id}` - Enhanced morning brief with KG insights
 
-```python
-import requests
+### Request/Response Models
 
-# Register a GitHub source
-response = requests.post(
-    "http://localhost:8000/api/v1/knowledge-graph/sources",
-    json={
-        "type": "github",
-        "config": {
-            "name": "Security Patterns",
-            "repository": "company/security-patterns",
-            "branch": "main"
-        },
-        "priority": "high"
-    }
-)
+#### Enhanced Search Request
+```json
+{
+  "query": "authentication implementation",
+  "developer_id": "alice@company.com",
+  "current_file": "auth/middleware.py",
+  "language": "python", 
+  "max_results": 10,
+  "include_relationships": true,
+  "similarity_threshold": 0.7,
+  "relationship_types": ["DEPENDS_ON", "SIMILAR_TO", "IMPLEMENTS"]
+}
+```
 
-# Search for patterns
-search_response = requests.post(
-    "http://localhost:8000/api/v1/knowledge-graph/search",
-    json={
-        "query": "authentication patterns",
-        "developer_id": "alice@company.com",
-        "max_results": 10
-    }
-)
+#### Relationship Discovery Response
+```json
+{
+  "source_id": "my-project",
+  "relationships_discovered": 247,
+  "relationship_breakdown": {
+    "DEPENDS_ON": 89,
+    "SIMILAR_TO": 56, 
+    "IMPLEMENTS": 23,
+    "RELATED_TO": 34,
+    "INHERITS_FROM": 18,
+    "SUPERSEDES": 12,
+    "INSPIRED_BY": 15
+  },
+  "analysis_metrics": {
+    "centrality_scores": {...},
+    "communities": [...],
+    "total_nodes": 156,
+    "total_edges": 247
+  }
+}
 ```
 
 ---
 
 ## 🧪 Testing
 
-### Run Tests
-
+### Run All Tests
 ```bash
-# Run all tests
-uv run pytest tests/
+# Core functionality tests
+uv run pytest tests/unit/
 
-# Run specific test categories
-uv run pytest tests/unit/                    # Unit tests
-uv run pytest tests/integration/             # Integration tests
-uv run pytest tests/knowledge_graph/         # Knowledge graph tests
+# Integration tests
+uv run pytest tests/integration/
 
-# Run with coverage
-uv run pytest --cov=src tests/
+# Knowledge Graph tests
+uv run pytest tests/knowledge_graph/
 
-# Run enhanced analysis tests
-uv run pytest tests/workflows/test_enhanced_analyzer.py
+# Manual testing
+uv run python tests/manual_test_runner.py
 ```
 
-### Test Knowledge Graph Features
+### Test Enhanced Features
 
 ```bash
-# Test vector store
-uv run pytest tests/knowledge_graph/test_vector_store.py
+# Test relationship discovery
+uv run python -c "
+import asyncio
+from src.devex_agent.knowledge_graph.engines.relationship_engine import RelationshipEngine
 
-# Test golden source registration
-uv run pytest tests/knowledge_graph/test_source_management.py
+async def test():
+    engine = RelationshipEngine()
+    await engine.initialize()
+    print('✅ Relationship Engine initialized')
+    
+asyncio.run(test())
+"
 
 # Test semantic search
-uv run pytest tests/knowledge_graph/test_search_engine.py
+curl -X POST "http://localhost:8000/api/v1/knowledge-graph/search" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "test pattern", "developer_id": "test"}'
+```
+
+### Performance Testing
+
+```bash
+# Test relationship discovery performance
+uv run python scripts/benchmark_relationship_discovery.py
+
+# Test search performance
+uv run python scripts/benchmark_search.py
+
+# Memory usage analysis
+uv run python scripts/memory_analysis.py
 ```
 
 ---
 
 ## 🚀 Deployment
 
-### Docker Deployment
+### Docker Deployment *(Coming Soon)*
 
-```bash
-# Build and deploy all services
-docker-compose -f docker-compose.prod.yml up -d
+```dockerfile
+FROM python:3.11-slim
 
-# Or deploy individual components
-docker build -t devex-agent .
-docker run -p 8000:8000 \
-  -e OPENAI_API_KEY=your_key \
-  -e GITHUB_ACCESS_TOKEN=your_token \
-  devex-agent
-```
+# Install uv
+RUN pip install uv
 
-### Kubernetes Deployment
+# Copy project
+COPY . /app
+WORKDIR /app
 
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
+# Install dependencies
+RUN uv sync --no-dev
 
-# Check deployment status
-kubectl get pods -l app=devex-agent
+# Install analysis tools
+RUN uv run pip install bandit safety pylint flake8
 
-# View logs
-kubectl logs -f deployment/devex-agent
+# Expose port
+EXPOSE 8000
+
+# Start agent
+CMD ["uv", "run", "python", "-m", "devex_agent.main"]
 ```
 
 ### Production Configuration
 
 ```yaml
-# docker-compose.prod.yml
+# docker-compose.yml
 version: '3.8'
+
 services:
   devex-agent:
-    image: devex-agent:latest
-    environment:
-      - DEBUG=false
-      - HOST=0.0.0.0
-      - PORT=8000
+    build: .
     ports:
       - "8000:8000"
-    depends_on:
-      - postgres
-      - neo4j
-      - redis
-  
-  postgres:
-    image: postgres:15
     environment:
-      POSTGRES_DB: devex_kg
-      POSTGRES_USER: devex
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-  
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEO4J_URI=bolt://neo4j:7687
+    depends_on:
+      - neo4j
+      - chroma
+
   neo4j:
     image: neo4j:5.0
     environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD}
-      NEO4J_dbms_memory_heap_max__size: 2G
+      - NEO4J_AUTH=neo4j/password
     volumes:
       - neo4j_data:/data
+
+  chroma:
+    image: chromadb/chroma:latest
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  neo4j_data:
+  chroma_data:
 ```
 
 ---
 
 ## 🔧 Configuration
 
-### Golden Source Configuration Examples
+### Environment Variables
 
-#### GitHub Source
-```yaml
-- id: "backend-standards"
-  type: "github"
-  config:
-    name: "Backend Development Standards"
-    repository: "company/backend-standards"
-    branch: "main"
-    include_patterns: ["src/**/*.py", "docs/**/*.md"]
-    exclude_patterns: ["tests/**/*", "*.pyc"]
-    access_token: "${GITHUB_ACCESS_TOKEN}"
-    include_issues: true
-    include_prs: true
-    include_wiki: true
-  priority: "high"
-  auto_sync: true
-  sync_interval: "6h"
+```bash
+# Core Configuration  
+DEVEX_HOST=localhost
+DEVEX_PORT=8000
+DEVEX_DEBUG=true
+
+# LLM Configuration
+OPENAI_API_KEY=sk-...
+LLM_MODEL=gpt-3.5-turbo
+LLM_TEMPERATURE=0.1
+
+# Knowledge Graph
+VECTOR_DB_PATH=./data/vector_store
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USERNAME=neo4j
+NEO4J_PASSWORD=password
+DATABASE_URL=sqlite:///./devex_agent.db
+
+# Enhanced Analysis
+ENABLE_ENHANCED_ANALYSIS=true
+BANDIT_CONFIG_PATH=./config/bandit.yaml
+PYLINT_CONFIG_PATH=./config/pylintrc
+
+# Relationship Discovery
+ENABLE_RELATIONSHIP_DISCOVERY=true
+SIMILARITY_THRESHOLD=0.7
+PATTERN_THRESHOLD=0.6
+RELATIONSHIP_CACHE_SIZE=1000
 ```
 
-#### Confluence Source
-```yaml
-- id: "architecture-docs"
-  type: "confluence"
-  config:
-    name: "Architecture Documentation"
-    base_url: "https://company.atlassian.net"
-    space_key: "ARCH"
-    page_filter: "type = page AND space = ARCH"
-    username: "${CONFLUENCE_USERNAME}"
-    api_token: "${CONFLUENCE_API_TOKEN}"
-    include_attachments: true
-    include_comments: false
-  priority: "medium"
-  auto_sync: true
-  sync_interval: "1d"
-```
+### Advanced Configuration
 
-### Advanced Performance Settings
-
-```yaml
-# config/advanced-settings.yaml
-performance:
-  max_concurrent_syncs: 5
-  chunk_size: 1000
-  chunk_overlap: 200
-  max_file_size_mb: 50
-  batch_size: 100
-  vector_search_timeout: 30
-
-embedding:
-  model: "sentence-transformers/all-mpnet-base-v2"
-  dimension: 768
-  batch_size: 32
-
-cache:
-  ttl_seconds: 3600
-  max_entries: 10000
+```python
+# config/advanced_settings.py
+KNOWLEDGE_GRAPH_CONFIG = {
+    "vector_store": {
+        "provider": "chromadb",
+        "embedding_model": "all-MiniLM-L6-v2",
+        "similarity_threshold": 0.7,
+        "max_results": 50
+    },
+    "graph_store": {
+        "provider": "neo4j",
+        "fallback_to_memory": True,
+        "relationship_types": [
+            "DEPENDS_ON", "SIMILAR_TO", "IMPLEMENTS",
+            "RELATED_TO", "INHERITS_FROM", "SUPERSEDES"
+        ]
+    },
+    "relationship_engine": {
+        "algorithms": {
+            "code_dependencies": {
+                "enabled": True,
+                "languages": ["python", "javascript", "java", "typescript"],
+                "confidence_threshold": 0.8
+            },
+            "semantic_similarity": {
+                "enabled": True,
+                "threshold": 0.7,
+                "use_caching": True
+            },
+            "design_patterns": {
+                "enabled": True,
+                "patterns": ["singleton", "factory", "observer", "strategy", "decorator"],
+                "threshold": 0.6
+            },
+            "cross_references": {
+                "enabled": True,
+                "doc_to_code": True,
+                "issue_to_code": True
+            }
+        },
+        "performance": {
+            "batch_size": 100,
+            "max_parallel": 4,
+            "cache_size": 1000
+        }
+    }
+}
 ```
 
 ---
@@ -719,151 +887,169 @@ cache:
 
 ### Common Issues
 
-#### 1. ChromaDB Installation Problems
-
+#### Knowledge Graph Not Working
 ```bash
-# Clear ChromaDB data and reinstall
-rm -rf ./data/vector_store
-pip install chromadb --no-cache-dir
+# Check if services are running
+uv run python -c "
+from src.devex_agent.knowledge_graph.core.service import KnowledgeGraphService
+import asyncio
 
-# On macOS with M1/M2
-pip install chromadb --no-binary :all:
+async def check():
+    kg = KnowledgeGraphService()
+    await kg.initialize()
+    print(f'KG initialized: {kg.is_initialized}')
+    
+asyncio.run(check())
+"
 ```
 
-#### 2. GitHub API Rate Limiting
-
+#### Relationship Discovery Slow
 ```bash
-# Check rate limit status
-curl -H "Authorization: token YOUR_TOKEN" \
-  https://api.github.com/rate_limit
+# Check relationship engine configuration
+uv run python -c "
+from src.devex_agent.knowledge_graph.engines.relationship_engine import RelationshipEngine
 
-# Solution: Use a higher-tier token or reduce sync frequency
+engine = RelationshipEngine()
+print(f'Similarity threshold: {engine.similarity_threshold}')
+print(f'Pattern threshold: {engine.pattern_threshold}')
+print('Try increasing thresholds for better performance')
+"
 ```
 
-#### 3. Analysis Tools Not Found
-
+#### Analysis Tools Not Found
 ```bash
-# Verify tool installation
-uv run bandit --version
-uv run pylint --version
-uv run flake8 --version
-
-# Reinstall all tools
-uv sync --dev
+# Verify tool installations
+uv run bandit --version || echo "Install: uv run pip install bandit"
+uv run pylint --version || echo "Install: uv run pip install pylint" 
+uv run safety --version || echo "Install: uv run pip install safety"
 ```
 
-#### 4. Vector Store Initialization Errors
-
+#### Vector Search Issues
 ```bash
-# Enable debug logging
-export DEBUG=true
-export LOG_LEVEL=DEBUG
-
-# Clear and reinitialize
-rm -rf ./data/vector_store
-python -m devex_agent.main
+# Check ChromaDB
+uv run python -c "
+import chromadb
+client = chromadb.Client()
+print('ChromaDB collections:', client.list_collections())
+"
 ```
 
-### Debug Mode
-
+#### Neo4j Connection Issues
 ```bash
-# Enable comprehensive debugging
-export DEBUG=true
-export LOG_LEVEL=DEBUG
-export KG_DEBUG=true
-
-# Start with verbose logging
-python -m devex_agent.main --verbose
+# Test Neo4j connection
+uv run python -c "
+try:
+    from neo4j import GraphDatabase
+    driver = GraphDatabase.driver('bolt://localhost:7687', auth=('neo4j', 'password'))
+    with driver.session() as session:
+        result = session.run('RETURN 1')
+        print('Neo4j connected successfully')
+    driver.close()
+except Exception as e:
+    print(f'Neo4j connection failed: {e}')
+    print('Agent will use in-memory fallback')
+"
 ```
 
-### Health Check Commands
+### Performance Optimization
 
-```bash
-# System health
-curl http://localhost:8000/
+#### Optimize Relationship Discovery
+```python
+# Increase thresholds for faster processing
+RELATIONSHIP_ENGINE_CONFIG = {
+    "similarity_threshold": 0.8,      # Higher = fewer relationships, faster
+    "pattern_threshold": 0.7,         # Higher = fewer patterns, faster
+    "enable_caching": True,           # Always enable for production
+    "batch_size": 50,                 # Smaller batches for memory efficiency
+}
+```
 
-# Knowledge graph status
-curl http://localhost:8000/status/your-dev-id
-
-# Vector store statistics
-curl http://localhost:8000/api/v1/knowledge-graph/analytics
-
-# Source health check
-curl http://localhost:8000/api/v1/knowledge-graph/sources/source-id/health
+#### Optimize Vector Search
+```python
+# Reduce search scope
+SEARCH_CONFIG = {
+    "max_results": 10,                # Limit results
+    "similarity_threshold": 0.8,      # Higher threshold = fewer results
+    "collections": ["documentation"], # Search specific collections only
+}
 ```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions to enhance the DevEx Agent's capabilities!
 
 ### Development Setup
+```bash
+# Clone and setup development environment
+git clone https://github.com/your-org/devex-agent.git
+cd devex-agent
+uv sync --group dev
 
-1. **Fork the repository**
-   ```bash
-   git fork https://github.com/your-org/devex-agent.git
-   cd devex-agent
-   ```
+# Install pre-commit hooks
+uv run pre-commit install
 
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
+# Run tests
+uv run pytest
 
-3. **Set up development environment**
-   ```bash
-   uv sync --dev
-   uv run pre-commit install
-   ```
+# Run with development settings
+DEVEX_DEBUG=true uv run python -m devex_agent.main
+```
 
-4. **Make changes and test**
-   ```bash
-   uv run pytest tests/
-   uv run flake8 src/
-   uv run mypy src/
-   ```
+### Areas for Contribution
 
-5. **Submit a pull request**
+#### 🚀 High Priority
+- **New Source Connectors**: Confluence, DeepWiki, custom APIs
+- **Enhanced Pattern Detection**: Machine learning-based pattern discovery
+- **Performance Optimization**: Parallel processing, advanced caching
+- **UI Improvements**: Better visualization of relationships and insights
 
-### Code Style
+#### 🧠 Advanced Features
+- **Custom Relationship Types**: Domain-specific relationship detection
+- **Graph Visualization**: Interactive relationship mapping
+- **ML Pattern Learning**: AI-powered pattern discovery from usage
+- **Advanced Analytics**: Trend analysis, developer productivity metrics
 
-- Follow PEP 8 for Python code
-- Use type hints throughout
-- Write comprehensive tests
-- Document new features
-- Keep commits atomic and well-described
+### Submission Guidelines
 
-### Testing Guidelines
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Test** your changes thoroughly
+4. **Document** new features in the README
+5. **Submit** a pull request with detailed description
 
-- Write unit tests for all new functionality
-- Add integration tests for API endpoints
-- Include knowledge graph tests for KG features
-- Ensure minimum 80% code coverage
+### Testing Requirements
+
+- All new features must include unit tests
+- Integration tests for Knowledge Graph features
+- Performance benchmarks for relationship discovery
+- Documentation updates for new APIs
 
 ---
 
 ## 🔮 Roadmap
 
-### Current Focus (Q1 2024)
-- ✅ Knowledge Graph Architecture Design
-- ✅ Core Knowledge Graph Service Implementation
-- 🔄 GitHub and Confluence Connectors
-- 🔄 Enhanced Morning Brief with Golden Source Integration
+### 🚀 Current Version (2.0)
+- ✅ Advanced Relationship Discovery Engine
+- ✅ Enhanced Knowledge Graph Integration  
+- ✅ Professional Code Analysis Tools
+- ✅ Pattern-Aware Morning Briefs
+- ✅ Multi-Algorithm Relationship Detection
 
-### Near Term (Q2 2024)
-- 🔄 Advanced Pattern Recognition
-- 📋 Real-time Code Evaluation
-- 📋 IntelliJ Plugin Knowledge Graph Integration
-- 📋 Performance Optimization
+### 🎯 Next Release (2.1)
+- 🔄 **Confluence MCP Connector** - Team documentation integration
+- 🔄 **Performance Optimization** - Parallel processing and advanced caching
+- 🔄 **Graph Visualization** - Interactive relationship mapping UI
+- 🔄 **Docker Production Setup** - Complete containerized deployment
 
-### Future Vision (2024+)
-- 📋 Multi-language Support Extension
-- 📋 Advanced AI Code Generation
-- 📋 Team Collaboration Features
-- 📋 Enterprise Security Enhancements
-- 📋 VSCode Plugin
-- 📋 Slack/Teams Integration
+### 🌟 Future Releases (2.2+)
+- 🔮 **ML Pattern Discovery** - AI-powered custom pattern learning
+- 🔮 **Advanced Analytics Dashboard** - Developer productivity insights
+- 🔮 **Multi-Language AST Analysis** - Extended language support
+- 🔮 **Real-time Collaboration** - Team-wide knowledge sharing
+- 🔮 **Custom Relationship Types** - Domain-specific relationship detection
+- 🔮 **Advanced Graph Algorithms** - PageRank, betweenness centrality, community detection
 
 ---
 
@@ -875,42 +1061,52 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-<div align="center">
+### 🤔 FAQ
 
-### Need Help?
+**Q: What makes this Knowledge Graph "advanced"?**
+A: Our system uses state-of-the-art relationship discovery algorithms including AST-based code analysis, vector embeddings for semantic similarity, design pattern detection, and graph algorithms for community detection and centrality analysis.
 
-| Resource | Description | Link |
-|----------|-------------|------|
-| 📚 **Documentation** | Comprehensive guides and API docs | [docs/](docs/) |
-| 🐛 **Bug Reports** | Report issues and bugs | [GitHub Issues](https://github.com/your-org/devex-agent/issues) |
-| 💬 **Discussions** | Community discussions and Q&A | [GitHub Discussions](https://github.com/your-org/devex-agent/discussions) |
-| 📧 **Contact** | Direct support from DevEx team | devex@company.com |
-| 💡 **Feature Requests** | Suggest new features | [GitHub Issues](https://github.com/your-org/devex-agent/issues/new?template=feature_request.md) |
+**Q: How does the Relationship Discovery Engine work?**  
+A: The engine analyzes code using multiple algorithms simultaneously: 
+- **AST parsing** for precise dependency extraction
+- **Vector embeddings** for semantic similarity 
+- **Pattern matching** for design pattern recognition
+- **Cross-reference analysis** for documentation-code linking
+- **Graph algorithms** for influence and community detection
 
-</div>
+**Q: Can I use this without OpenAI?**
+A: Yes! The Knowledge Graph, relationship discovery, and enhanced code analysis work independently. You'll miss LLM-powered insights but get all the advanced relationship mapping and search capabilities.
 
-### Frequently Asked Questions
+**Q: How accurate is the pattern detection?**
+A: Pattern detection uses configurable confidence thresholds (default 60-70%). The system combines multiple signals including keyword matching, code structure analysis, and semantic similarity for robust pattern recognition.
 
-**Q: How do I add a custom knowledge source?**
-A: Use the MCP connector system. See [MCP Configuration Guide](docs/mcp-connectors.md) for details.
+**Q: What's the performance impact of relationship discovery?**
+A: The engine is optimized with caching, batch processing, and configurable thresholds. Initial discovery takes time but subsequent queries are fast. You can adjust thresholds for performance vs accuracy trade-offs.
 
-**Q: Can I use this without OpenAI API?**
-A: Yes! The system works with basic analysis. OpenAI enhances pattern detection and insights.
+**Q: Does this work with private repositories?**
+A: Absolutely! The agent supports GitHub access tokens for private repos and can analyze local file systems. All processing happens locally or in your controlled environment.
 
-**Q: How much storage does the Knowledge Graph need?**
-A: Depends on sources. Typical setup: ~100MB for vector store, ~50MB for graph data per 1000 documents.
+### 📧 Contact & Support
 
-**Q: Is this secure for enterprise use?**
-A: Yes. All data stays in your infrastructure. Supports enterprise authentication and audit logging.
+- **Issues**: [GitHub Issues](https://github.com/your-org/devex-agent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/devex-agent/discussions)
+- **Documentation**: [GitHub Wiki](https://github.com/your-org/devex-agent/wiki)
+- **Security**: security@your-org.com
+
+### 🔗 Related Projects
+
+- **IntelliJ Plugin**: [DevEx IntelliJ Integration](https://github.com/your-org/devex-intellij-plugin)
+- **VSCode Extension**: [DevEx VSCode Extension](https://github.com/your-org/devex-vscode) *(planned)*
+- **CLI Tool**: [DevEx CLI](https://github.com/your-org/devex-cli) *(planned)*
 
 ---
 
 <div align="center">
 
+**🚀 Ready to revolutionize your development experience?**
+
+[Get Started](#-quick-start) • [View Examples](#-usage-examples) • [Join Community](https://github.com/your-org/devex-agent/discussions)
+
 **Built with ❤️ by the DevEx Team**
-
-*Empowering developers with intelligent, ambient AI and knowledge-driven insights.*
-
-⭐ **Star this repo** if you find it useful! ⭐
 
 </div> 
