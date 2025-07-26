@@ -54,9 +54,8 @@ async def startup_event():
     knowledge_graph = KnowledgeGraphService()
     await knowledge_graph.initialize()
     
-    # Initialize Ambient Orchestrator with Knowledge Graph
-    ambient_orchestrator = AmbientOrchestrator()
-    ambient_orchestrator.knowledge_graph = knowledge_graph  # Inject KG service
+    # Initialize Ambient Orchestrator with Knowledge Graph service
+    ambient_orchestrator = AmbientOrchestrator(knowledge_graph_service=knowledge_graph)
     await ambient_orchestrator.initialize()
     
     logger.info("✅ DevEx Ambient Agent with Knowledge Graph initialized and monitoring")

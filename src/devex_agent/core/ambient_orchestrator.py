@@ -67,17 +67,20 @@ class AmbientOrchestrator:
     Manages state, processes events, and orchestrates workflows
     """
     
-    def __init__(self):
+    def __init__(self, knowledge_graph_service=None):
         self.developer_states: Dict[str, AmbientState] = {}
         self.morning_brief_workflow = None
+        self.knowledge_graph_service = knowledge_graph_service  # NEW: Store KG service
         self.settings = get_settings()
         self.is_initialized = False
     
     async def initialize(self):
         """Initialize the ambient orchestrator"""
         try:
-            # Initialize the morning brief workflow
-            self.morning_brief_workflow = await create_morning_brief_workflow()
+            # Initialize the morning brief workflow with Knowledge Graph service
+            self.morning_brief_workflow = await create_morning_brief_workflow(
+                knowledge_graph_service=self.knowledge_graph_service  # NEW: Pass KG service
+            )
             self.is_initialized = True
             logger.info("🤖 Ambient Orchestrator initialized successfully")
         except Exception as e:
