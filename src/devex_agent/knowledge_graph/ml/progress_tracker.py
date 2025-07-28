@@ -1309,3 +1309,479 @@ class ProgressTracker:
             "engagement_low_threshold": 0.3,
             "consistency_low_threshold": 0.4
         } 
+    
+    # ===== Analytics Aggregation Methods =====
+    
+    async def get_developer_snapshots_for_analytics(self, 
+                                                   developer_id: str,
+                                                   time_period_days: int = 180) -> List[ProgressSnapshot]:
+        """Get progress snapshots for analytics calculations"""
+        try:
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=time_period_days)
+            
+            snapshots = []
+            for snapshot in self.progress_snapshots.get(developer_id, []):
+                if start_date <= snapshot.timestamp <= end_date:
+                    snapshots.append(snapshot)
+            
+            # Sort by timestamp
+            snapshots.sort(key=lambda x: x.timestamp)
+            
+            logger.info(f"📊 Retrieved {len(snapshots)} snapshots for analytics for {developer_id}")
+            return snapshots
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get snapshots for analytics: {e}")
+            return []
+    
+    async def calculate_skill_progression_stats(self, 
+                                              developer_id: str,
+                                              skill_name: str,
+                                              time_period_days: int = 180) -> Dict[str, Any]:
+        """Calculate detailed skill progression statistics"""
+        try:
+            snapshots = await self.get_developer_snapshots_for_analytics(developer_id, time_period_days)
+            
+            if len(snapshots) < 2:
+                return {"error": "insufficient_data", "snapshots_count": len(snapshots)}
+            
+            # Extract skill level progression
+            skill_progression = []
+            for snapshot in snapshots:
+                if skill_name in snapshot.skill_levels:
+                    skill_progression.append({
+                        "timestamp": snapshot.timestamp,
+                        "level": snapshot.skill_levels[skill_name],
+                        "velocity": snapshot.velocity_metrics.get(skill_name, 0.0)
+                    })
+            
+            if len(skill_progression) < 2:
+                return {"error": "insufficient_skill_data", "data_points": len(skill_progression)}
+            
+            # Calculate statistics
+            levels = [point["level"] for point in skill_progression]
+            velocities = [point["velocity"] for point in skill_progression]
+            
+            stats = {
+                "total_improvement": levels[-1] - levels[0],
+                "average_level": sum(levels) / len(levels),
+                "peak_level": max(levels),
+                "current_level": levels[-1],
+                "average_velocity": sum(velocities) / len(velocities),
+                "peak_velocity": max(velocities),
+                "improvement_periods": self._identify_improvement_periods(skill_progression),
+                "plateau_periods": self._identify_plateau_periods_detailed(skill_progression),
+                "consistency_score": self._calculate_skill_consistency(levels),
+                "trend_direction": self._determine_skill_trend(levels),
+                "data_points": len(skill_progression),
+                "time_span_days": (skill_progression[-1]["timestamp"] - skill_progression[0]["timestamp"]).days
+            }
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to calculate skill progression stats: {e}")
+            return {"error": str(e)}
+    
+    async def calculate_learning_efficiency_metrics(self, 
+                                                   developer_id: str,
+                                                   time_period_days: int = 180) -> Dict[str, Any]:
+        """Calculate learning efficiency and effectiveness metrics"""
+        try:
+            snapshots = await self.get_developer_snapshots_for_analytics(developer_id, time_period_days)
+            
+            if len(snapshots) < 3:
+                return {"error": "insufficient_data", "snapshots_count": len(snapshots)}
+            
+            # Calculate time-based efficiency metrics
+            total_time_spent = 0
+            total_skill_improvement = 0
+            engagement_scores = []
+            consistency_scores = []
+            
+            for i in range(1, len(snapshots)):
+                prev_snapshot = snapshots[i-1]
+                curr_snapshot = snapshots[i]
+                
+                # Calculate skill improvements
+                skill_improvement = 0
+                skill_count = 0
+                for skill, level in curr_snapshot.skill_levels.items():
+                    prev_level = prev_snapshot.skill_levels.get(skill, 0.0)
+                    improvement = max(0, level - prev_level)
+                    skill_improvement += improvement
+                    skill_count += 1
+                
+                if skill_count > 0:
+                    total_skill_improvement += skill_improvement / skill_count
+                
+                # Add time spent
+                time_spent = curr_snapshot.engagement_metrics.get("time_spent_hours", 0)
+                total_time_spent += time_spent
+                
+                # Collect engagement and consistency scores
+                engagement = curr_snapshot.engagement_metrics.get("consistency_score", 0.7)
+                engagement_scores.append(engagement)
+                
+                consistency = curr_snapshot.engagement_metrics.get("consistency_score", 0.7)
+                consistency_scores.append(consistency)
+            
+            # Calculate efficiency metrics
+            efficiency_metrics = {
+                "skill_improvement_per_hour": (total_skill_improvement / max(total_time_spent, 1)) * 100,
+                "total_skill_improvement": total_skill_improvement,
+                "total_time_spent_hours": total_time_spent,
+                "average_engagement": sum(engagement_scores) / len(engagement_scores) if engagement_scores else 0.0,
+                "engagement_consistency": self._calculate_consistency(engagement_scores),
+                "learning_consistency": sum(consistency_scores) / len(consistency_scores) if consistency_scores else 0.0,
+                "efficiency_trend": self._calculate_efficiency_trend(snapshots),
+                "peak_learning_periods": await self._identify_peak_learning_periods(snapshots),
+                "learning_velocity_distribution": self._analyze_velocity_distribution(snapshots)
+            }
+            
+            return efficiency_metrics
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to calculate learning efficiency: {e}")
+            return {"error": str(e)}
+    
+    async def calculate_milestone_completion_analytics(self, 
+                                                     developer_id: str,
+                                                     time_period_days: int = 180) -> Dict[str, Any]:
+        """Calculate milestone completion analytics"""
+        try:
+            snapshots = await self.get_developer_snapshots_for_analytics(developer_id, time_period_days)
+            
+            if not snapshots:
+                return {"error": "no_data", "snapshots_count": 0}
+            
+            # Analyze milestone completion patterns
+            all_milestones = set()
+            milestone_completions_by_month = defaultdict(list)
+            
+            for snapshot in snapshots:
+                # Group milestones by month
+                month_key = snapshot.timestamp.strftime("%Y-%m")
+                milestone_completions_by_month[month_key].extend(snapshot.milestone_completions)
+                all_milestones.update(snapshot.milestone_completions)
+            
+            # Calculate completion rates and patterns
+            total_milestones = len(all_milestones)
+            completion_timeline = []
+            
+            for month, milestones in sorted(milestone_completions_by_month.items()):
+                completion_timeline.append({
+                    "month": month,
+                    "milestones_completed": len(set(milestones)),
+                    "completion_rate": len(set(milestones)) / max(total_milestones, 1),
+                    "milestone_list": list(set(milestones))
+                })
+            
+            # Calculate analytics
+            completion_analytics = {
+                "total_milestones": total_milestones,
+                "completion_timeline": completion_timeline,
+                "average_milestones_per_month": total_milestones / max(len(milestone_completions_by_month), 1),
+                "milestone_completion_acceleration": self._calculate_milestone_acceleration(completion_timeline),
+                "consistency_in_completion": self._calculate_milestone_consistency(completion_timeline),
+                "peak_completion_months": self._identify_peak_completion_months(completion_timeline),
+                "completion_velocity_trend": self._analyze_completion_velocity_trend(completion_timeline)
+            }
+            
+            return completion_analytics
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to calculate milestone analytics: {e}")
+            return {"error": str(e)}
+    
+    async def generate_comparative_analytics(self, 
+                                           developer_id: str,
+                                           comparison_group: List[str] = None,
+                                           time_period_days: int = 180) -> Dict[str, Any]:
+        """Generate comparative analytics against peer group"""
+        try:
+            # Get developer's data
+            developer_snapshots = await self.get_developer_snapshots_for_analytics(developer_id, time_period_days)
+            
+            if not developer_snapshots:
+                return {"error": "no_developer_data"}
+            
+            # For now, generate simulated peer comparison data
+            # In practice, this would compare against real peer data
+            developer_metrics = await self._calculate_aggregate_metrics(developer_snapshots)
+            
+            # Simulated peer benchmarks (would be calculated from real data)
+            peer_benchmarks = {
+                "average_skill_level": 0.65,
+                "average_learning_velocity": 0.05,
+                "average_milestone_completion_rate": 0.7,
+                "average_engagement_score": 0.72,
+                "average_consistency_score": 0.68
+            }
+            
+            # Calculate comparative scores
+            comparative_analytics = {
+                "developer_metrics": developer_metrics,
+                "peer_benchmarks": peer_benchmarks,
+                "comparative_scores": {
+                    "skill_level_percentile": self._calculate_percentile(
+                        developer_metrics["average_skill_level"], 
+                        peer_benchmarks["average_skill_level"]
+                    ),
+                    "learning_velocity_percentile": self._calculate_percentile(
+                        developer_metrics["average_learning_velocity"],
+                        peer_benchmarks["average_learning_velocity"]
+                    ),
+                    "milestone_completion_percentile": self._calculate_percentile(
+                        developer_metrics["milestone_completion_rate"],
+                        peer_benchmarks["average_milestone_completion_rate"]
+                    ),
+                    "engagement_percentile": self._calculate_percentile(
+                        developer_metrics["engagement_score"],
+                        peer_benchmarks["average_engagement_score"]
+                    )
+                },
+                "strength_areas": self._identify_strength_areas(developer_metrics, peer_benchmarks),
+                "improvement_opportunities": self._identify_improvement_opportunities(developer_metrics, peer_benchmarks),
+                "overall_performance_score": self._calculate_overall_performance_score(developer_metrics, peer_benchmarks)
+            }
+            
+            return comparative_analytics
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to generate comparative analytics: {e}")
+            return {"error": str(e)}
+    
+    # ===== Helper Methods for Analytics =====
+    
+    def _identify_improvement_periods(self, skill_progression: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Identify periods of significant skill improvement"""
+        improvement_periods = []
+        improvement_threshold = 0.1  # 10% improvement threshold
+        
+        for i in range(1, len(skill_progression)):
+            prev_level = skill_progression[i-1]["level"]
+            curr_level = skill_progression[i]["level"]
+            improvement = curr_level - prev_level
+            
+            if improvement > improvement_threshold:
+                improvement_periods.append({
+                    "start_date": skill_progression[i-1]["timestamp"],
+                    "end_date": skill_progression[i]["timestamp"],
+                    "improvement": improvement,
+                    "start_level": prev_level,
+                    "end_level": curr_level
+                })
+        
+        return improvement_periods
+    
+    def _identify_plateau_periods_detailed(self, skill_progression: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Identify detailed plateau periods in skill progression"""
+        plateau_periods = []
+        plateau_threshold = 0.05  # 5% change threshold
+        min_plateau_duration = 2  # Minimum 2 data points
+        
+        current_plateau = None
+        
+        for i in range(1, len(skill_progression)):
+            prev_level = skill_progression[i-1]["level"]
+            curr_level = skill_progression[i]["level"]
+            change = abs(curr_level - prev_level)
+            
+            if change < plateau_threshold:
+                if current_plateau is None:
+                    current_plateau = {
+                        "start_date": skill_progression[i-1]["timestamp"],
+                        "start_level": prev_level,
+                        "data_points": [skill_progression[i-1], skill_progression[i]]
+                    }
+                else:
+                    current_plateau["data_points"].append(skill_progression[i])
+            else:
+                if current_plateau and len(current_plateau["data_points"]) >= min_plateau_duration:
+                    current_plateau["end_date"] = current_plateau["data_points"][-1]["timestamp"]
+                    current_plateau["end_level"] = current_plateau["data_points"][-1]["level"]
+                    current_plateau["duration_days"] = (
+                        current_plateau["end_date"] - current_plateau["start_date"]
+                    ).days
+                    plateau_periods.append(current_plateau)
+                current_plateau = None
+        
+        return plateau_periods
+    
+    def _calculate_skill_consistency(self, levels: List[float]) -> float:
+        """Calculate consistency score for skill progression"""
+        if len(levels) < 2:
+            return 0.0
+        
+        # Calculate variance in level changes
+        changes = [levels[i] - levels[i-1] for i in range(1, len(levels))]
+        if not changes:
+            return 1.0
+        
+        # Lower variance = higher consistency
+        import statistics
+        variance = statistics.variance(changes) if len(changes) > 1 else 0.0
+        consistency = max(0.0, 1.0 - (variance * 10))  # Scale appropriately
+        
+        return min(1.0, consistency)
+    
+    def _determine_skill_trend(self, levels: List[float]) -> str:
+        """Determine overall trend direction for skill levels"""
+        if len(levels) < 2:
+            return "insufficient_data"
+        
+        first_half = levels[:len(levels)//2]
+        second_half = levels[len(levels)//2:]
+        
+        first_avg = sum(first_half) / len(first_half)
+        second_avg = sum(second_half) / len(second_half)
+        
+        diff = second_avg - first_avg
+        
+        if diff > 0.05:
+            return "improving"
+        elif diff < -0.05:
+            return "declining"
+        else:
+            return "stable"
+    
+    def _calculate_efficiency_trend(self, snapshots: List[ProgressSnapshot]) -> str:
+        """Calculate efficiency trend over time"""
+        if len(snapshots) < 3:
+            return "insufficient_data"
+        
+        # Calculate efficiency for each period
+        efficiencies = []
+        for i in range(1, len(snapshots)):
+            prev_snapshot = snapshots[i-1]
+            curr_snapshot = snapshots[i]
+            
+            # Simple efficiency calculation
+            skill_change = 0
+            for skill, level in curr_snapshot.skill_levels.items():
+                prev_level = prev_snapshot.skill_levels.get(skill, 0.0)
+                skill_change += max(0, level - prev_level)
+            
+            time_spent = curr_snapshot.engagement_metrics.get("time_spent_hours", 1)
+            efficiency = skill_change / max(time_spent, 1)
+            efficiencies.append(efficiency)
+        
+        # Determine trend
+        if len(efficiencies) < 2:
+            return "stable"
+        
+        first_half_avg = sum(efficiencies[:len(efficiencies)//2]) / max(len(efficiencies)//2, 1)
+        second_half_avg = sum(efficiencies[len(efficiencies)//2:]) / max(len(efficiencies) - len(efficiencies)//2, 1)
+        
+        if second_half_avg > first_half_avg * 1.1:
+            return "improving"
+        elif second_half_avg < first_half_avg * 0.9:
+            return "declining"
+        else:
+            return "stable"
+    
+    async def _identify_peak_learning_periods(self, snapshots: List[ProgressSnapshot]) -> List[Dict[str, Any]]:
+        """Identify periods of peak learning performance"""
+        if len(snapshots) < 3:
+            return []
+        
+        peak_periods = []
+        velocities = []
+        
+        # Calculate velocity for each period
+        for i in range(1, len(snapshots)):
+            velocity = 0
+            for skill, level in snapshots[i].skill_levels.items():
+                prev_level = snapshots[i-1].skill_levels.get(skill, 0.0)
+                velocity += max(0, level - prev_level)
+            velocities.append((snapshots[i].timestamp, velocity))
+        
+        if not velocities:
+            return peak_periods
+        
+        # Find periods above average velocity
+        avg_velocity = sum(v[1] for v in velocities) / len(velocities)
+        peak_threshold = avg_velocity * 1.5  # 50% above average
+        
+        for timestamp, velocity in velocities:
+            if velocity > peak_threshold:
+                peak_periods.append({
+                    "date": timestamp,
+                    "velocity": velocity,
+                    "above_average_factor": velocity / avg_velocity if avg_velocity > 0 else 1.0
+                })
+        
+        return peak_periods
+    
+    def _analyze_velocity_distribution(self, snapshots: List[ProgressSnapshot]) -> Dict[str, Any]:
+        """Analyze the distribution of learning velocities"""
+        all_velocities = []
+        
+        for snapshot in snapshots:
+            for velocity in snapshot.velocity_metrics.values():
+                all_velocities.append(velocity)
+        
+        if not all_velocities:
+            return {"error": "no_velocity_data"}
+        
+        import statistics
+        
+        return {
+            "mean": statistics.mean(all_velocities),
+            "median": statistics.median(all_velocities),
+            "std_deviation": statistics.stdev(all_velocities) if len(all_velocities) > 1 else 0.0,
+            "min": min(all_velocities),
+            "max": max(all_velocities),
+            "percentile_75": statistics.quantiles(all_velocities, n=4)[2] if len(all_velocities) > 3 else max(all_velocities),
+            "percentile_25": statistics.quantiles(all_velocities, n=4)[0] if len(all_velocities) > 3 else min(all_velocities)
+        }
+    
+    # Additional helper methods for analytics calculations...
+    async def _calculate_aggregate_metrics(self, snapshots: List[ProgressSnapshot]) -> Dict[str, Any]:
+        """Calculate aggregate metrics from snapshots"""
+        if not snapshots:
+            return {}
+        
+        # Calculate averages across all snapshots
+        all_skill_levels = []
+        all_velocities = []
+        all_engagement_scores = []
+        total_milestones = 0
+        
+        for snapshot in snapshots:
+            all_skill_levels.extend(snapshot.skill_levels.values())
+            all_velocities.extend(snapshot.velocity_metrics.values())
+            all_engagement_scores.append(snapshot.engagement_metrics.get("consistency_score", 0.7))
+            total_milestones += len(snapshot.milestone_completions)
+        
+        return {
+            "average_skill_level": sum(all_skill_levels) / len(all_skill_levels) if all_skill_levels else 0.0,
+            "average_learning_velocity": sum(all_velocities) / len(all_velocities) if all_velocities else 0.0,
+            "milestone_completion_rate": total_milestones / len(snapshots) if snapshots else 0.0,
+            "engagement_score": sum(all_engagement_scores) / len(all_engagement_scores) if all_engagement_scores else 0.0,
+            "total_snapshots": len(snapshots)
+        }
+    
+    def _calculate_percentile(self, value: float, benchmark: float) -> float:
+        """Calculate percentile score compared to benchmark"""
+        if benchmark == 0:
+            return 50.0 if value == 0 else (100.0 if value > 0 else 0.0)
+        
+        ratio = value / benchmark
+        # Convert ratio to percentile (50th percentile = benchmark)
+        if ratio >= 2.0:
+            return 95.0
+        elif ratio >= 1.5:
+            return 80.0
+        elif ratio >= 1.2:
+            return 70.0
+        elif ratio >= 1.0:
+            return 60.0
+        elif ratio >= 0.8:
+            return 40.0
+        elif ratio >= 0.5:
+            return 20.0
+        else:
+            return 5.0 

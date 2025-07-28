@@ -1,0 +1,124 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node dependencies
+/node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Production build
+dist
+dist-ssr
+build
+*.local
+
+# Cache directories
+.npm
+.eslintcache
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp
+.pnp.js
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vite
+.vite
+
+# Angular specific
+/.angular/cache
+.sass-cache/
+/connect.lock
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# WebStorm
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.tmp
+*.temp
+
+# Testing
+/coverage
+/.nyc_output
+
+# E2E testing
+/e2e/*.js
+/e2e/*.map
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Misc
+/.sass-cache
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db 

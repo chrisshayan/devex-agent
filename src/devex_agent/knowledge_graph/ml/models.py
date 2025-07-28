@@ -305,3 +305,184 @@ class SkillEvolution(BaseModel):
     learning_plateau_periods: List[Dict[str, Any]] = Field(default_factory=list, description="Periods of slow growth")
     breakthrough_moments: List[Dict[str, Any]] = Field(default_factory=list, description="Significant improvement events")
     skill_correlations: Dict[str, float] = Field(default_factory=dict, description="Correlation with other skills") 
+
+# ===== Analytics Models for Dashboard =====
+
+class SkillProgressionTimeline(BaseModel):
+    """Detailed skill evolution tracking over time"""
+    developer_id: str = Field(..., description="Developer identifier")
+    skill_name: str = Field(..., description="Skill being tracked")
+    skill_category: SkillCategory = Field(..., description="Skill category")
+    
+    # Timeline data points
+    timeline_data: List[Dict[str, Any]] = Field(..., description="Time-series data points")
+    trend_analysis: Dict[str, Any] = Field(..., description="Trend analysis results")
+    milestone_markers: List[Dict[str, Any]] = Field(default_factory=list, description="Learning milestone markers")
+    plateau_periods: List[Dict[str, Any]] = Field(default_factory=list, description="Detected plateau periods")
+    breakthrough_moments: List[Dict[str, Any]] = Field(default_factory=list, description="Breakthrough learning moments")
+    
+    # Predictive analytics
+    projected_progression: Dict[str, Any] = Field(default_factory=dict, description="Future skill progression predictions")
+    confidence_intervals: Dict[str, float] = Field(default_factory=dict, description="Prediction confidence intervals")
+    
+    # Metadata
+    first_assessment: datetime = Field(..., description="First assessment timestamp")
+    last_updated: datetime = Field(..., description="Last update timestamp")
+    total_data_points: int = Field(..., description="Number of data points")
+
+
+class CodeQualityMetrics(BaseModel):
+    """Code quality metrics over time"""
+    developer_id: str = Field(..., description="Developer identifier")
+    metric_id: str = Field(..., description="Metric identifier")
+    
+    # Quality metrics timeline
+    complexity_timeline: List[Dict[str, Any]] = Field(..., description="Code complexity over time")
+    pattern_adoption_timeline: List[Dict[str, Any]] = Field(..., description="Design pattern adoption progression")
+    security_score_timeline: List[Dict[str, Any]] = Field(..., description="Security score progression")
+    maintainability_timeline: List[Dict[str, Any]] = Field(..., description="Maintainability score progression")
+    test_coverage_timeline: List[Dict[str, Any]] = Field(..., description="Test coverage progression")
+    documentation_timeline: List[Dict[str, Any]] = Field(..., description="Documentation quality progression")
+    
+    # Golden source similarity
+    golden_source_similarity: List[Dict[str, Any]] = Field(..., description="Similarity to golden sources over time")
+    
+    # Overall trends
+    quality_trend: TrendDirection = Field(..., description="Overall quality trend")
+    improvement_rate: float = Field(..., description="Rate of quality improvement")
+    
+    # Metadata
+    assessment_period_start: datetime = Field(..., description="Assessment period start")
+    assessment_period_end: datetime = Field(..., description="Assessment period end")
+    total_commits_analyzed: int = Field(..., description="Total commits analyzed")
+
+
+class LearningVelocityAnalytics(BaseModel):
+    """Learning efficiency and consistency metrics"""
+    developer_id: str = Field(..., description="Developer identifier")
+    analysis_id: str = Field(..., description="Analysis identifier")
+    
+    # Velocity metrics
+    skills_per_month: float = Field(..., description="Average skills improved per month")
+    learning_consistency_score: float = Field(..., description="Learning consistency (0.0-1.0)")
+    peak_learning_periods: List[Dict[str, Any]] = Field(..., description="Periods of peak learning")
+    learning_efficiency: float = Field(..., description="Overall learning efficiency")
+    
+    # Velocity timeline
+    velocity_timeline: List[Dict[str, Any]] = Field(..., description="Learning velocity over time")
+    acceleration_timeline: List[Dict[str, Any]] = Field(..., description="Learning acceleration over time")
+    
+    # Correlation analysis
+    coaching_correlation: float = Field(..., description="Correlation between coaching and velocity")
+    resource_effectiveness: Dict[str, float] = Field(..., description="Effectiveness of different resource types")
+    milestone_completion_impact: float = Field(..., description="Impact of milestone completion on velocity")
+    
+    # Predictive insights
+    predicted_velocity_3months: float = Field(..., description="Predicted velocity for next 3 months")
+    predicted_velocity_6months: float = Field(..., description="Predicted velocity for next 6 months")
+    velocity_factors: Dict[str, float] = Field(..., description="Factors affecting learning velocity")
+    
+    # Metadata
+    analysis_period_start: datetime = Field(..., description="Analysis period start")
+    analysis_period_end: datetime = Field(..., description="Analysis period end")
+    generated_at: datetime = Field(..., description="Analysis generation timestamp")
+
+
+class CoachingImpactAnalysis(BaseModel):
+    """Measure effectiveness of coaching sessions"""
+    developer_id: str = Field(..., description="Developer identifier")
+    analysis_id: str = Field(..., description="Analysis identifier")
+    
+    # Coaching effectiveness metrics
+    total_sessions: int = Field(..., description="Total coaching sessions")
+    suggestions_acceptance_rate: float = Field(..., description="Rate of suggestion acceptance")
+    skill_improvement_correlation: float = Field(..., description="Correlation between coaching and skill improvement")
+    coaching_velocity_impact: float = Field(..., description="Impact of coaching on learning velocity")
+    
+    # Session analysis
+    session_effectiveness_timeline: List[Dict[str, Any]] = Field(..., description="Effectiveness of sessions over time")
+    high_impact_sessions: List[str] = Field(..., description="IDs of high-impact coaching sessions")
+    coaching_themes: Dict[str, int] = Field(..., description="Common coaching themes and frequency")
+    
+    # Outcome tracking
+    before_after_metrics: Dict[str, Dict[str, float]] = Field(..., description="Before/after metrics for coached areas")
+    long_term_impact: Dict[str, Any] = Field(..., description="Long-term impact of coaching")
+    developer_satisfaction_trend: List[Dict[str, Any]] = Field(..., description="Developer satisfaction over time")
+    
+    # ROI analysis
+    time_to_improvement: Dict[str, float] = Field(..., description="Time from coaching to improvement by skill")
+    coaching_roi_score: float = Field(..., description="Return on investment score for coaching")
+    career_progression_acceleration: float = Field(..., description="Career progression acceleration due to coaching")
+    
+    # Metadata
+    analysis_period_start: datetime = Field(..., description="Analysis period start")
+    analysis_period_end: datetime = Field(..., description="Analysis period end")
+    coaching_model_version: str = Field(..., description="Version of coaching model used")
+
+
+class DeveloperAnalyticsDashboard(BaseModel):
+    """Complete analytics dashboard data for a developer"""
+    developer_id: str = Field(..., description="Developer identifier")
+    dashboard_id: str = Field(..., description="Dashboard identifier")
+    generated_at: datetime = Field(..., description="Dashboard generation timestamp")
+    
+    # Core metrics
+    skill_progression: List[SkillProgressionTimeline] = Field(..., description="Skill progression timelines")
+    code_quality: CodeQualityMetrics = Field(..., description="Code quality metrics")
+    learning_velocity: LearningVelocityAnalytics = Field(..., description="Learning velocity analytics")
+    coaching_impact: CoachingImpactAnalysis = Field(..., description="Coaching impact analysis")
+    
+    # Summary metrics
+    overall_progress_score: float = Field(..., description="Overall progress score (0.0-1.0)")
+    career_stage_progression: Dict[str, Any] = Field(..., description="Career stage progression analysis")
+    key_achievements: List[Dict[str, Any]] = Field(..., description="Key achievements and milestones")
+    areas_of_strength: List[str] = Field(..., description="Developer's strength areas")
+    improvement_opportunities: List[str] = Field(..., description="Areas for improvement")
+    
+    # Predictive analytics
+    next_milestone_predictions: List[Dict[str, Any]] = Field(..., description="Predictions for next milestones")
+    skill_mastery_timeline: Dict[str, str] = Field(..., description="Predicted timeline to skill mastery")
+    career_progression_forecast: Dict[str, Any] = Field(..., description="Career progression forecast")
+    
+    # Comparative analytics
+    peer_benchmarking: Dict[str, Any] = Field(default_factory=dict, description="Comparison to peers")
+    team_contribution_metrics: Dict[str, Any] = Field(default_factory=dict, description="Team contribution analysis")
+    
+    # Configuration
+    dashboard_config: Dict[str, Any] = Field(default_factory=dict, description="Dashboard configuration settings")
+    refresh_frequency: str = Field(default="daily", description="Dashboard refresh frequency")
+
+
+# ===== Demo Data Models =====
+
+class DemoScenarioData(BaseModel):
+    """Data for demo scenarios like Alex Chen's journey"""
+    scenario_id: str = Field(..., description="Scenario identifier")
+    scenario_name: str = Field(..., description="Scenario name")
+    developer_profile: DeveloperSkillProfile = Field(..., description="Demo developer profile")
+    
+    # Timeline data
+    timeline_duration_months: int = Field(..., description="Timeline duration in months")
+    monthly_snapshots: List[Dict[str, Any]] = Field(..., description="Monthly progress snapshots")
+    milestone_completions: List[Dict[str, Any]] = Field(..., description="Milestone completion events")
+    coaching_sessions: List[CoachingSession] = Field(..., description="Coaching session history")
+    
+    # Code evolution simulation
+    code_quality_evolution: List[CodeQualityMetrics] = Field(..., description="Code quality progression")
+    skill_assessments: List[SkillAssessment] = Field(..., description="Skill assessment history")
+    
+    # Learning journey
+    learning_plans: List[LearningPlan] = Field(..., description="Learning plans during journey")
+    learning_velocity_data: List[Dict[str, Any]] = Field(..., description="Learning velocity progression")
+    
+    # Career progression
+    career_milestones: List[Dict[str, Any]] = Field(..., description="Career milestone achievements")
+    promotion_timeline: List[Dict[str, Any]] = Field(..., description="Career advancement timeline")
+    
+    # Narrative elements
+    narrative_arc: List[Dict[str, Any]] = Field(..., description="Story arc with key moments")
+    demo_highlights: List[Dict[str, Any]] = Field(..., description="Key highlights for demo")
+    
+    # Metadata
+    created_at: datetime = Field(..., description="Scenario creation timestamp")
+    scenario_version: str = Field(default="1.0", description="Scenario version") 

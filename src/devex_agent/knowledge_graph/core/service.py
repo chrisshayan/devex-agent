@@ -22,6 +22,8 @@ from ..engines.relationship_engine import RelationshipEngine
 from ..connectors.factory import ConnectorFactory
 from ...config.settings import get_settings
 
+logger = logging.getLogger(__name__)
+
 # Import ML capabilities
 try:
     from ..ml.codebert_engine import CodeBERTEngine
@@ -38,8 +40,6 @@ try:
 except ImportError:
     ML_AVAILABLE = False
     logger.warning("ML capabilities not available - CodeBERT features will be disabled")
-
-logger = logging.getLogger(__name__)
 
 class KnowledgeGraphService:
     """

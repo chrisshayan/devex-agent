@@ -953,6 +953,450 @@ async def generate_code_embeddings(request: Dict[str, Any]):
         logger.error(f"❌ Error generating embeddings: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating embeddings: {str(e)}")
 
+# === Advanced Analytics Endpoints ===
+
+@app.get("/api/v1/analytics/developer/{developer_id}/dashboard")
+async def get_developer_analytics_dashboard(
+    developer_id: str,
+    time_period_days: int = 180
+):
+    """Generate comprehensive analytics dashboard for a developer"""
+    try:
+        logger.info(f"📊 Generating analytics dashboard for {developer_id}")
+        
+        # Initialize analytics service if not already done
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        from .knowledge_graph.ml.progress_tracker import ProgressTracker
+        
+        analytics_service = AnalyticsService()
+        await analytics_service.initialize()
+        
+        # Generate dashboard
+        dashboard = await analytics_service.generate_developer_dashboard(
+            developer_id, time_period_days
+        )
+        
+        await analytics_service.cleanup()
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "dashboard": dashboard.dict() if hasattr(dashboard, 'dict') else dashboard,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating analytics dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error generating analytics dashboard: {str(e)}"
+        )
+
+@app.get("/api/v1/analytics/developer/{developer_id}/skills/timeline")
+async def get_skill_progression_timeline(
+    developer_id: str,
+    time_period_days: int = 180
+):
+    """Get detailed skill progression timeline for a developer"""
+    try:
+        logger.info(f"📈 Getting skill progression timeline for {developer_id}")
+        
+        # Initialize analytics service
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        
+        analytics_service = AnalyticsService()
+        await analytics_service.initialize()
+        
+        # Get skill progression data
+        skill_progressions = await analytics_service.analyze_skill_progression_timeline(
+            developer_id, time_period_days
+        )
+        
+        await analytics_service.cleanup()
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "time_period_days": time_period_days,
+            "skill_progressions": [
+                progression.dict() if hasattr(progression, 'dict') else progression
+                for progression in skill_progressions
+            ],
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting skill timeline: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error getting skill timeline: {str(e)}"
+        )
+
+@app.get("/api/v1/analytics/developer/{developer_id}/code-quality/trends")
+async def get_code_quality_trends(
+    developer_id: str,
+    time_period_days: int = 180
+):
+    """Get code quality trends and metrics for a developer"""
+    try:
+        logger.info(f"🔍 Getting code quality trends for {developer_id}")
+        
+        # Initialize analytics service
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        
+        analytics_service = AnalyticsService()
+        await analytics_service.initialize()
+        
+        # Get code quality metrics
+        code_quality = await analytics_service.analyze_code_quality_metrics(
+            developer_id, time_period_days
+        )
+        
+        await analytics_service.cleanup()
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "time_period_days": time_period_days,
+            "code_quality_metrics": code_quality.dict() if hasattr(code_quality, 'dict') else code_quality,
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting code quality trends: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error getting code quality trends: {str(e)}"
+        )
+
+@app.get("/api/v1/analytics/developer/{developer_id}/learning/velocity")
+async def get_learning_velocity_analytics(
+    developer_id: str,
+    time_period_days: int = 180
+):
+    """Get learning velocity and efficiency analytics for a developer"""
+    try:
+        logger.info(f"⚡ Getting learning velocity analytics for {developer_id}")
+        
+        # Initialize analytics service
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        
+        analytics_service = AnalyticsService()
+        await analytics_service.initialize()
+        
+        # Get learning velocity analytics
+        velocity_analytics = await analytics_service.analyze_learning_velocity(
+            developer_id, time_period_days
+        )
+        
+        await analytics_service.cleanup()
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "time_period_days": time_period_days,
+            "velocity_analytics": velocity_analytics.dict() if hasattr(velocity_analytics, 'dict') else velocity_analytics,
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting learning velocity: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error getting learning velocity: {str(e)}"
+        )
+
+@app.get("/api/v1/analytics/developer/{developer_id}/coaching/impact")
+async def get_coaching_impact_analysis(
+    developer_id: str,
+    time_period_days: int = 180
+):
+    """Get coaching impact and effectiveness analysis for a developer"""
+    try:
+        logger.info(f"🎯 Getting coaching impact analysis for {developer_id}")
+        
+        # Initialize analytics service
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        
+        analytics_service = AnalyticsService()
+        await analytics_service.initialize()
+        
+        # Get coaching impact analysis
+        coaching_impact = await analytics_service.analyze_coaching_impact(
+            developer_id, time_period_days
+        )
+        
+        await analytics_service.cleanup()
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "time_period_days": time_period_days,
+            "coaching_impact": coaching_impact.dict() if hasattr(coaching_impact, 'dict') else coaching_impact,
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting coaching impact: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error getting coaching impact: {str(e)}"
+        )
+
+@app.get("/api/v1/analytics/team/benchmarks")
+async def get_team_benchmarks(
+    team_id: Optional[str] = None,
+    skill_category: Optional[str] = None,
+    time_period_days: int = 180
+):
+    """Get team-level benchmarking and comparative analytics"""
+    try:
+        logger.info(f"👥 Getting team benchmarks for team_id: {team_id}")
+        
+        # This would be implemented with real team data
+        # For now, return simulated benchmark data
+        
+        return {
+            "status": "success",
+            "team_id": team_id,
+            "skill_category": skill_category,
+            "time_period_days": time_period_days,
+            "benchmarks": {
+                "team_average_skills": {
+                    "python": 0.72,
+                    "javascript": 0.68,
+                    "testing": 0.65,
+                    "architecture": 0.58
+                },
+                "skill_distribution": {
+                    "beginner": 0.2,
+                    "intermediate": 0.5,
+                    "advanced": 0.3
+                },
+                "learning_velocity": {
+                    "team_average": 0.45,
+                    "top_performers": [
+                        {"developer_id": "alex_chen", "velocity": 0.8},
+                        {"developer_id": "sarah_kim", "velocity": 0.75}
+                    ]
+                },
+                "coaching_effectiveness": {
+                    "team_average_roi": 3.2,
+                    "session_acceptance_rate": 0.78
+                }
+            },
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting team benchmarks: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error getting team benchmarks: {str(e)}"
+        )
+
+# === Demo Data Endpoints ===
+
+@app.get("/api/v1/demo/alex-chen/journey")
+async def get_alex_chen_demo_journey():
+    """Generate and return Alex Chen's complete 18-month journey demo data"""
+    try:
+        logger.info("🎭 Generating Alex Chen demo journey data...")
+        
+        from .knowledge_graph.ml.demo_data_generator import AlexChenDemoGenerator
+        
+        # Generate the complete demo scenario
+        demo_generator = AlexChenDemoGenerator()
+        scenario = await demo_generator.generate_complete_demo_scenario()
+        
+        return {
+            "status": "success",
+            "demo_type": "alex_chen_18_month_journey", 
+            "scenario": scenario.dict() if hasattr(scenario, 'dict') else scenario,
+            "narrative_summary": {
+                "title": "Alex Chen: From Junior to Senior Developer",
+                "timeframe": "18 months",
+                "key_achievements": [
+                    "Career progression 1.8x faster than average",
+                    "Code quality improvement: 60%",
+                    "Test coverage: 20% → 85%",
+                    "78% coaching suggestion acceptance rate"
+                ],
+                "phases": [
+                    {"name": "Foundation Building", "months": "1-3", "focus": "basic_skills"},
+                    {"name": "Accelerated Learning", "months": "4-9", "focus": "rapid_growth"},
+                    {"name": "Leadership Emergence", "months": "10-15", "focus": "technical_leadership"},
+                    {"name": "Senior Contributor", "months": "16-18", "focus": "organizational_impact"}
+                ]
+            },
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating Alex Chen demo: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error generating demo data: {str(e)}"
+        )
+
+@app.get("/api/v1/demo/alex-chen/dashboard/{month}")
+async def get_alex_chen_dashboard_for_month(
+    month: int,
+    analytics_type: str = "complete"
+):
+    """Get Alex Chen's analytics dashboard for a specific month"""
+    try:
+        if month < 1 or month > 18:
+            raise HTTPException(status_code=400, detail="Month must be between 1 and 18")
+        
+        logger.info(f"📊 Generating Alex Chen dashboard for month {month}")
+        
+        from .knowledge_graph.ml.demo_data_generator import AlexChenDemoGenerator
+        from .knowledge_graph.ml.analytics_service import AnalyticsService
+        
+        # Generate demo data up to the specified month
+        demo_generator = AlexChenDemoGenerator()
+        scenario = await demo_generator.generate_complete_demo_scenario()
+        
+        # Filter data up to the specified month
+        relevant_snapshots = [
+            snapshot for snapshot in scenario.monthly_snapshots 
+            if (snapshot.timestamp - demo_generator.journey_start).days <= month * 30
+        ]
+        
+        relevant_coaching = [
+            session for session in scenario.coaching_sessions
+            if (session.timestamp - demo_generator.journey_start).days <= month * 30
+        ]
+        
+        # Calculate phase information
+        phase_info = demo_generator._get_phase_for_month(month - 1)
+        
+        return {
+            "status": "success",
+            "developer_id": "alex_chen",
+            "month": month,
+            "phase": phase_info,
+            "dashboard_data": {
+                "current_skills": relevant_snapshots[-1].skill_levels if relevant_snapshots else {},
+                "progress_summary": {
+                    "total_snapshots": len(relevant_snapshots),
+                    "coaching_sessions": len(relevant_coaching),
+                    "milestones_completed": len(relevant_snapshots[-1].milestone_completions) if relevant_snapshots else 0,
+                    "learning_plan_progress": relevant_snapshots[-1].learning_plan_progress if relevant_snapshots else 0.0
+                },
+                "phase_narrative": demo_generator.phases[phase_info]["narrative"],
+                "recent_achievements": [
+                    milestone for milestone in scenario.milestone_completions
+                    if milestone["month"] <= month
+                ][-3:],  # Last 3 achievements
+                "velocity_metrics": relevant_snapshots[-1].velocity_metrics if relevant_snapshots else {},
+                "engagement_metrics": relevant_snapshots[-1].engagement_metrics if relevant_snapshots else {}
+            },
+            "timeline_context": {
+                "months_elapsed": month,
+                "months_remaining": 18 - month,
+                "completion_percentage": (month / 18) * 100,
+                "next_phase": demo_generator._get_phase_for_month(month) if month < 18 else "completed"
+            },
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating monthly dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error generating monthly dashboard: {str(e)}"
+        )
+
+@app.get("/api/v1/demo/alex-chen/highlights")
+async def get_alex_chen_demo_highlights():
+    """Get key demo highlights and visualizations for Alex Chen's journey"""
+    try:
+        logger.info("🌟 Generating Alex Chen demo highlights...")
+        
+        return {
+            "status": "success",
+            "demo_highlights": {
+                "career_progression": {
+                    "title": "Career Acceleration",
+                    "metric": "1.8x Faster Than Average",
+                    "details": "Junior → Senior in 18 months vs typical 24-36 months",
+                    "visualization": "timeline_comparison",
+                    "impact_score": 95
+                },
+                "code_quality": {
+                    "title": "Code Quality Transformation",
+                    "metric": "60% Overall Improvement",
+                    "details": {
+                        "complexity": "Cyclomatic complexity: 15 → 6",
+                        "test_coverage": "Test coverage: 20% → 85%",
+                        "pattern_adoption": "Design patterns: 0 → 8 patterns"
+                    },
+                    "visualization": "before_after_metrics",
+                    "impact_score": 88
+                },
+                "coaching_effectiveness": {
+                    "title": "DevEx Coaching Impact",
+                    "metric": "78% Suggestion Acceptance",
+                    "details": "52 coaching sessions with measurable skill improvements",
+                    "visualization": "trend_line_chart",
+                    "impact_score": 92
+                },
+                "learning_velocity": {
+                    "title": "Learning Acceleration",
+                    "metric": "Peak 0.6 Skills/Month",
+                    "details": {
+                        "phase_1": "0.3 skills/month (foundation)",
+                        "phase_2": "0.6 skills/month (peak learning)",
+                        "phase_3": "0.4 skills/month (mastery focus)"
+                    },
+                    "visualization": "velocity_curve",
+                    "impact_score": 85
+                }
+            },
+            "narrative_moments": [
+                {
+                    "month": 3,
+                    "title": "First Breakthrough",
+                    "description": "DevEx coaching helps Alex overcome initial code review struggles",
+                    "emotional_impact": "frustration_to_hope"
+                },
+                {
+                    "month": 8,
+                    "title": "Technical Confidence",
+                    "description": "Successfully implements complex React feature with DevEx guidance",
+                    "emotional_impact": "confidence_building"
+                },
+                {
+                    "month": 14,
+                    "title": "Leadership Emergence",
+                    "description": "Takes ownership of architecture decisions and mentors junior developer",
+                    "emotional_impact": "pride_and_responsibility"
+                },
+                {
+                    "month": 18,
+                    "title": "Senior Achievement",
+                    "description": "Promotion to Senior Developer and recognition as technical leader",
+                    "emotional_impact": "achievement_and_vision"
+                }
+            ],
+            "roi_analysis": {
+                "devex_investment": "Minimal setup + AI-powered guidance",
+                "developer_acceleration": "18 months vs 30+ months typical",
+                "productivity_gain": "Estimated 40% faster feature delivery",
+                "retention_impact": "High - developer feels supported and growing"
+            },
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating demo highlights: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error generating demo highlights: {str(e)}"
+        )
+
 
 if __name__ == "__main__":
     settings = get_settings()

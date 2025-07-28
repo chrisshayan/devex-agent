@@ -9,6 +9,7 @@ __pycache__/
 
 # gradle files
 *.gradle/
+intellij-plugin/gradle/
 
 # C extensions
 *.so
@@ -36,6 +37,9 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+
+vision
+
 
 # Installer logs
 pip-log.txt
@@ -239,30 +243,89 @@ mlruns/
 # =============================================================================
 
 # Node.js dependencies
-web_ui/node_modules/
-web_ui/dist/
-web_ui/build/
-web_ui/.next/
-web_ui/.nuxt/
+**/node_modules/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+**/dist/
+**/build/
+**/out/
+**/out-tsc/
+**/bazel-out/
+**/tmp/
+dist-ssr/
+*.local
 
 # Package manager files
-web_ui/package-lock.json
-web_ui/yarn.lock
-web_ui/pnpm-lock.yaml
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnp
+.pnp.js
+
+# Cache directories
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.eslintcache
+/.angular/cache/
+.vite/
+.next/
+.nuxt/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+/typings/
+
+# Testing
+/coverage/
+/.nyc_output/
+testem.log
+
+# Storybook
+.out/
+.storybook-out/
+
+# E2E
+/e2e/*.js
+/e2e/*.map
+
+# Environment files (frontend)
+dashboard/.env*
+frontend/.env*
+web/.env*
+ui/.env*
+
+# React/Angular specific
+.sass-cache/
+/connect.lock
+/libpeerconnection.log
 
 # =============================================================================
-# DEVELOPMENT TOOLS & IDEs
+# DEVELOPMENT TOOLS & IDEs (Enhanced for Frontend)
 # =============================================================================
-
-# PyCharm
-.idea/
-
-# Vision doc
-vision/
 
 # VSCode
-.vscode/
-*.code-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# WebStorm/IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
 
 # Sublime Text
 *.sublime-project
@@ -283,8 +346,15 @@ auto-save-list
 tramp
 .\#*
 
+# Angular/React specific IDE files
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
 # =============================================================================
-# OPERATING SYSTEM FILES
+# OPERATING SYSTEM FILES (Enhanced)
 # =============================================================================
 
 # macOS
@@ -293,142 +363,44 @@ tramp
 ._*
 .Spotlight-V100
 .Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
 # Windows
 ehthumbs.db
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 *Zone.Identifier
 
 # Linux
 *~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
 # =============================================================================
-# CONTAINERIZATION & DEPLOYMENT
+# MISCELLANEOUS (Frontend Additions)
 # =============================================================================
 
-# Docker
-.dockerignore
-docker-compose.override.yml
-docker-compose.local.yml
-
-# Kubernetes
-k8s-secrets.yaml
-*.kubeconfig
-
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-
-# Ansible
-*.retry
-
-# =============================================================================
-# CACHE & TEMPORARY FILES
-# =============================================================================
-
-# General cache
-cache/
-tmp/
-temp/
-.cache/
-.tmp/
-
-# Python cache
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# =============================================================================
-# SECURITY & COMPLIANCE
-# =============================================================================
-
-# Security scan results
-security_reports/
-vulnerability_reports/
-
-# Audit logs (system-specific)
-audit_trail/
-
-# =============================================================================
-# SYSTEM RUNTIME FILES
-# =============================================================================
-
-# Process IDs
-pid.txt
+# Runtime data
+pids/
 *.pid
-
-# Lock files
-*.lock
+*.seed
+*.pid.lock
 
 # Temporary files
 *.tmp
 *.temp
-
-# =============================================================================
-# CUSTOM TLM SYSTEM FILES
-# =============================================================================
-
-# Agent state files
-agent_state/
-agent_memory/
-
-# Portfolio snapshots
-portfolio_snapshots/
-
-# Risk calculation cache
-risk_cache/
-
-# System performance logs
-performance_logs/
-
-# Development test files
-test_*.py
-debug_*.py
-scratch_*.py
-
-# Local development overrides
-local_*.py
-dev_*.py
-
-# =============================================================================
-# EXTERNAL INTEGRATIONS
-# =============================================================================
-
-# Bloomberg API cache
-bloomberg_cache/
-
-# Reuters cache
-reuters_cache/
-
-# Third-party vendor data
-vendor_data/
-
-# =============================================================================
-# DOCUMENTATION BUILD FILES
-# =============================================================================
-
-# Sphinx
-docs/_build/
-docs/build/
-
-# MkDocs
-site/
-
-# =============================================================================
-# MISCELLANEOUS
-# =============================================================================
-
-# Temporary editor files
-*.swp
-*.swo
-*~
+.tmp/
+temp/
 
 # Archive files
 *.zip
@@ -441,5 +413,4 @@ site/
 *.iso
 *.dmg
 *.exe
-*.msi 
-/intellij-plugin/gradle/wrapper/gradle-wrapper.jar
+*.msi
