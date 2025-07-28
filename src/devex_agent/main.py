@@ -451,6 +451,352 @@ async def sync_all_sources(background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=f"Error starting sync: {str(e)}")
 
 
+# ===== Phase 2: Career Coaching API Endpoints =====
+
+@app.post("/api/v1/coaching/session/{developer_id}")
+async def generate_coaching_session(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Generate a personalized coaching session using Expert Career Coach LLM"""
+    try:
+        # Extract request parameters
+        current_skill_profile = request.get("current_skill_profile")
+        recent_pattern_analysis = request.get("recent_pattern_analysis")
+        current_code_context = request.get("current_code_context")
+        learning_goals = request.get("learning_goals", [])
+        time_availability = request.get("time_availability", "medium")
+        career_stage = request.get("career_stage", "mid")
+        specific_question = request.get("specific_question")
+        
+        logger.info(f"🎯 Generating coaching session for developer: {developer_id}")
+        
+        # Convert string values to enums
+        from devex_agent.knowledge_graph.ml.models import CareerStage, CoachingTrigger
+        
+        career_stage_enum = CareerStage(career_stage) if career_stage else CareerStage.MID
+        trigger_type = CoachingTrigger.ON_DEMAND
+        
+        coaching_session = await knowledge_graph.generate_coaching_session(
+            developer_id=developer_id,
+            current_skill_profile=current_skill_profile,
+            recent_pattern_analysis=recent_pattern_analysis,
+            current_code_context=current_code_context,
+            learning_goals=learning_goals,
+            time_availability=time_availability,
+            career_stage=career_stage_enum,
+            trigger_type=trigger_type,
+            specific_question=specific_question
+        )
+        
+        if coaching_session is None:
+            return {
+                "status": "unavailable",
+                "message": "Career coaching not available - ML engines not initialized",
+                "coaching_session": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "coaching_session": coaching_session.dict() if hasattr(coaching_session, 'dict') else coaching_session,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating coaching session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating coaching session: {str(e)}")
+
+
+@app.post("/api/v1/learning/plan/{developer_id}")
+async def generate_learning_plan(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Generate a personalized learning plan using Learning Path Engine"""
+    try:
+        # Extract request parameters
+        current_skills = request.get("current_skills", {})
+        target_skills = request.get("target_skills", {})
+        career_stage = request.get("career_stage", "mid")
+        time_availability = request.get("time_availability", "medium")
+        learning_style = request.get("learning_style", "mixed")
+        learning_goals = request.get("learning_goals", [])
+        timeline_weeks = request.get("timeline_weeks")
+        
+        if not target_skills:
+            raise HTTPException(status_code=400, detail="Target skills are required")
+        
+        logger.info(f"📋 Generating learning plan for developer: {developer_id}")
+        
+        # Convert string values to enums
+        from devex_agent.knowledge_graph.ml.models import (
+            CareerStage, TimeAvailability, LearningStyle, SkillAssessment, SkillCategory
+        )
+        
+        career_stage_enum = CareerStage(career_stage) if career_stage else CareerStage.MID
+        time_availability_enum = TimeAvailability(time_availability.upper()) if time_availability else TimeAvailability.MEDIUM
+        learning_style_enum = LearningStyle(learning_style.upper()) if learning_style else LearningStyle.MIXED
+        
+        # Convert current skills to SkillAssessment objects if needed
+        skill_assessments = {}
+        for skill_name, skill_data in current_skills.items():
+            if isinstance(skill_data, dict):
+                skill_assessments[skill_name] = SkillAssessment(
+                    skill_name=skill_name,
+                    category=SkillCategory(skill_data.get("category", "technical")),
+                    level=skill_data.get("level", 0.5),
+                    confidence=skill_data.get("confidence", 0.5),
+                    evidence=skill_data.get("evidence", [])
+                )
+            else:
+                # Assume it's a level value
+                skill_assessments[skill_name] = SkillAssessment(
+                    skill_name=skill_name,
+                    category=SkillCategory.TECHNICAL,
+                    level=float(skill_data),
+                    confidence=0.7,
+                    evidence=[]
+                )
+        
+        learning_plan = await knowledge_graph.generate_learning_plan(
+            developer_id=developer_id,
+            current_skills=skill_assessments,
+            target_skills=target_skills,
+            career_stage=career_stage_enum,
+            time_availability=time_availability_enum,
+            learning_style=learning_style_enum,
+            learning_goals=learning_goals,
+            timeline_weeks=timeline_weeks
+        )
+        
+        if learning_plan is None:
+            return {
+                "status": "unavailable",
+                "message": "Learning plan generation not available - ML engines not initialized",
+                "learning_plan": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "learning_plan": learning_plan.dict() if hasattr(learning_plan, 'dict') else learning_plan,
+            "generated_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating learning plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating learning plan: {str(e)}")
+
+
+@app.post("/api/v1/progress/snapshot/{developer_id}")
+async def record_progress_snapshot(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Record a progress snapshot for learning progress tracking"""
+    try:
+        # Extract request parameters
+        current_skills = request.get("current_skills", {})
+        learning_plan = request.get("learning_plan")
+        completed_milestones = request.get("completed_milestones", [])
+        notes = request.get("notes")
+        
+        if not current_skills:
+            raise HTTPException(status_code=400, detail="Current skills are required")
+        
+        logger.info(f"📈 Recording progress snapshot for developer: {developer_id}")
+        
+        # Convert current skills to SkillAssessment objects
+        from devex_agent.knowledge_graph.ml.models import SkillAssessment, SkillCategory
+        
+        skill_assessments = {}
+        for skill_name, skill_data in current_skills.items():
+            if isinstance(skill_data, dict):
+                skill_assessments[skill_name] = SkillAssessment(
+                    skill_name=skill_name,
+                    category=SkillCategory(skill_data.get("category", "technical")),
+                    level=skill_data.get("level", 0.5),
+                    confidence=skill_data.get("confidence", 0.5),
+                    evidence=skill_data.get("evidence", [])
+                )
+            else:
+                skill_assessments[skill_name] = SkillAssessment(
+                    skill_name=skill_name,
+                    category=SkillCategory.TECHNICAL,
+                    level=float(skill_data),
+                    confidence=0.7,
+                    evidence=[]
+                )
+        
+        snapshot = await knowledge_graph.track_progress_snapshot(
+            developer_id=developer_id,
+            current_skills=skill_assessments,
+            learning_plan=learning_plan,
+            completed_milestones=completed_milestones,
+            notes=notes
+        )
+        
+        if snapshot is None:
+            return {
+                "status": "unavailable",
+                "message": "Progress tracking not available - ML engines not initialized",
+                "snapshot": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "snapshot": snapshot.dict() if hasattr(snapshot, 'dict') else snapshot,
+            "recorded_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error recording progress snapshot: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error recording progress snapshot: {str(e)}")
+
+
+@app.get("/api/v1/progress/analysis/{developer_id}")
+async def analyze_learning_progress(
+    developer_id: str,
+    time_period_days: int = 90
+):
+    """Analyze learning progress trends for a developer"""
+    try:
+        logger.info(f"📊 Analyzing learning progress for developer: {developer_id}")
+        
+        progress_analysis = await knowledge_graph.analyze_learning_progress(
+            developer_id=developer_id,
+            time_period_days=time_period_days
+        )
+        
+        if progress_analysis is None:
+            return {
+                "status": "unavailable",
+                "message": "Progress analysis not available - ML engines not initialized",
+                "analysis": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "time_period_days": time_period_days,
+            "analysis": progress_analysis,
+            "analyzed_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error analyzing learning progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error analyzing learning progress: {str(e)}")
+
+
+@app.post("/api/v1/progress/timeline/{developer_id}")
+async def predict_learning_timeline(
+    developer_id: str,
+    request: Dict[str, Any]
+):
+    """Predict learning timeline for target skills based on current velocity"""
+    try:
+        # Extract request parameters
+        target_skills = request.get("target_skills", {})
+        confidence_level = request.get("confidence_level", 0.8)
+        
+        if not target_skills:
+            raise HTTPException(status_code=400, detail="Target skills are required")
+        
+        logger.info(f"🔮 Predicting learning timeline for developer: {developer_id}")
+        
+        timeline_prediction = await knowledge_graph.predict_learning_timeline(
+            developer_id=developer_id,
+            target_skills=target_skills,
+            confidence_level=confidence_level
+        )
+        
+        if timeline_prediction is None:
+            return {
+                "status": "unavailable",
+                "message": "Timeline prediction not available - ML engines not initialized",
+                "prediction": None
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "prediction": timeline_prediction,
+            "predicted_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error predicting learning timeline: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error predicting learning timeline: {str(e)}")
+
+
+@app.get("/api/v1/coaching/history/{developer_id}")
+async def get_coaching_history(
+    developer_id: str,
+    limit: int = 10
+):
+    """Get coaching session history for a developer"""
+    try:
+        logger.info(f"📚 Retrieving coaching history for developer: {developer_id}")
+        
+        coaching_history = await knowledge_graph.get_coaching_history(
+            developer_id=developer_id,
+            limit=limit
+        )
+        
+        if coaching_history is None:
+            return {
+                "status": "unavailable",
+                "message": "Coaching history not available - ML engines not initialized",
+                "history": []
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "history": [session.dict() if hasattr(session, 'dict') else session for session in coaching_history],
+            "retrieved_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving coaching history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving coaching history: {str(e)}")
+
+
+@app.get("/api/v1/progress/alerts/{developer_id}")
+async def get_progress_alerts(
+    developer_id: str,
+    include_resolved: bool = False
+):
+    """Get progress alerts for a developer"""
+    try:
+        logger.info(f"🚨 Retrieving progress alerts for developer: {developer_id}")
+        
+        alerts = await knowledge_graph.get_progress_alerts(
+            developer_id=developer_id,
+            include_resolved=include_resolved
+        )
+        
+        if alerts is None:
+            return {
+                "status": "unavailable",
+                "message": "Progress alerts not available - ML engines not initialized",
+                "alerts": []
+            }
+        
+        return {
+            "status": "success",
+            "developer_id": developer_id,
+            "alerts": [alert.dict() if hasattr(alert, 'dict') else alert for alert in alerts],
+            "retrieved_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving progress alerts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving progress alerts: {str(e)}")
+
+
 # ===== ML & Developer Intelligence Endpoints =====
 
 @app.post("/api/v1/ml/developer/{developer_id}/analyze")

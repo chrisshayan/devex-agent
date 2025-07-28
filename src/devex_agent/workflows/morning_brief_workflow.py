@@ -31,6 +31,7 @@ class MorningBriefState(TypedDict, total=False):
     build_analysis: Dict[str, Any]
     pattern_analysis: Dict[str, Any]
     knowledge_graph_insights: Dict[str, Any]  # NEW: KG insights
+    career_coaching_insights: Dict[str, Any]  # NEW: Career coaching insights
     critical_insights: List[Dict[str, Any]]
     suggestions: List[Dict[str, Any]]
     morning_brief: Dict[str, Any]
@@ -73,6 +74,7 @@ class MorningBriefWorkflow:
         workflow.add_node("analyze_events", self.analyze_events_node)
         workflow.add_node("analyze_code", self.code_analysis_node)
         workflow.add_node("analyze_knowledge_graph", self.knowledge_graph_analysis_node)  # NEW
+        workflow.add_node("analyze_career_coaching", self.career_coaching_analysis_node)  # NEW: Career coaching
         workflow.add_node("detect_patterns", self.pattern_detection_node)
         workflow.add_node("generate_insights", self.generate_insights_node)
         workflow.add_node("compile_brief", self.compile_brief_node)
@@ -81,7 +83,8 @@ class MorningBriefWorkflow:
         workflow.add_edge(START, "analyze_events")
         workflow.add_edge("analyze_events", "analyze_code")
         workflow.add_edge("analyze_code", "analyze_knowledge_graph")  # NEW: KG after code analysis
-        workflow.add_edge("analyze_knowledge_graph", "detect_patterns")  # NEW: Pattern detection after KG
+        workflow.add_edge("analyze_knowledge_graph", "analyze_career_coaching")  # NEW: Career coaching after KG
+        workflow.add_edge("analyze_career_coaching", "detect_patterns")  # NEW: Pattern detection after coaching
         workflow.add_edge("detect_patterns", "generate_insights")
         workflow.add_edge("generate_insights", "compile_brief")
         workflow.add_edge("compile_brief", END)
@@ -373,6 +376,165 @@ class MorningBriefWorkflow:
         })
         return new_state
     
+    async def career_coaching_analysis_node(self, state: MorningBriefState) -> MorningBriefState:
+        """
+        Node 4: Analyze developer patterns and provide career coaching insights
+        """
+        logger.info("🎯 Starting career coaching analysis...")
+        
+        try:
+            developer_id = state.get("developer_id", "unknown")
+            events = state.get("events", [])
+            code_analysis = state.get("code_analysis", {})
+            knowledge_graph_insights = state.get("knowledge_graph_insights", {})
+            
+            # Initialize career coaching insights
+            coaching_insights = {
+                "coaching_session": None,
+                "learning_recommendations": [],
+                "progress_assessment": None,
+                "skill_insights": {},
+                "career_guidance": {},
+                "timeline_predictions": {},
+                "analysis_metadata": {
+                    "analyzed_at": datetime.now().isoformat(),
+                    "coaching_available": False,
+                    "trigger_type": "morning_brief"
+                }
+            }
+            
+            # Check if knowledge graph service is available and has career coaching
+            if (self.knowledge_graph_service and 
+                hasattr(self.knowledge_graph_service, 'career_coach') and 
+                self.knowledge_graph_service.career_coach):
+                
+                logger.info("🤖 Career coaching engines available - generating insights...")
+                coaching_insights["analysis_metadata"]["coaching_available"] = True
+                
+                # Extract context from recent activities
+                learning_goals = []
+                current_code_context = {}
+                
+                # Analyze recent events for learning context
+                for event in events[-5:]:  # Last 5 events
+                    if event.get("type") == "file_changed":
+                        file_path = event.get("file_path", "")
+                        if file_path:
+                            # Extract language/technology from file extension
+                            if file_path.endswith(('.py', '.js', '.ts', '.java', '.go', '.rs')):
+                                language = file_path.split('.')[-1]
+                                if f"improve {language} skills" not in learning_goals:
+                                    learning_goals.append(f"improve {language} skills")
+                
+                # Build current code context from code analysis
+                if code_analysis:
+                    current_code_context = {
+                        "languages_used": code_analysis.get("languages", {}),
+                        "complexity_metrics": code_analysis.get("complexity", {}),
+                        "recent_changes": len(events),
+                        "activity_level": "active" if len(events) > 5 else "moderate"
+                    }
+                
+                # Generate coaching session for morning brief
+                try:
+                    from devex_agent.knowledge_graph.ml.models import CareerStage, CoachingTrigger
+                    
+                    coaching_session = await self.knowledge_graph_service.generate_coaching_session(
+                        developer_id=developer_id,
+                        current_skill_profile=None,  # Would be loaded from persistence
+                        recent_pattern_analysis=None,  # Would be from previous analysis
+                        current_code_context=current_code_context,
+                        learning_goals=learning_goals or ["continuous improvement"],
+                        time_availability="medium",
+                        career_stage=CareerStage.MID,  # Would be determined from profile
+                                                    trigger_type=CoachingTrigger.MORNING_BRIEF,
+                        specific_question=None
+                    )
+                    
+                    if coaching_session:
+                        coaching_insights["coaching_session"] = {
+                            "session_id": coaching_session.session_id,
+                            "coaching_message": coaching_session.coaching_message,
+                            "skills_addressed": coaching_session.skills_addressed,
+                            "action_items": coaching_session.action_items,
+                            "immediate_suggestions": coaching_session.immediate_suggestions,
+                            "learning_opportunities": coaching_session.learning_opportunities,
+                            "resource_suggestions": [
+                                {
+                                    "title": resource.title,
+                                    "type": resource.type,
+                                    "difficulty": resource.difficulty,
+                                    "relevance_score": resource.relevance_score,
+                                    "personalization_reason": resource.personalization_reason
+                                } for resource in coaching_session.resource_suggestions
+                            ] if coaching_session.resource_suggestions else []
+                        }
+                        
+                        logger.info(f"✅ Generated coaching session with {len(coaching_session.action_items)} action items")
+                
+                except Exception as e:
+                    logger.debug(f"Coaching session generation failed: {e}")
+                
+                # Generate career guidance based on insights
+                if coaching_insights["coaching_session"]:
+                    coaching_insights["career_guidance"] = {
+                        "focus_areas": learning_goals,
+                        "immediate_actions": coaching_insights["coaching_session"]["action_items"],
+                        "learning_priority": "active_engagement" if len(events) > 5 else "skill_building",
+                        "coaching_frequency": "weekly" if current_code_context.get("activity_level") == "active" else "bi_weekly",
+                        "development_stage": "growth_phase" if learning_goals else "maintenance_phase"
+                    }
+                
+                logger.info("✅ Career coaching analysis completed with full insights")
+                
+            else:
+                logger.info("⚠️ Career coaching engines not available - basic analysis only")
+                
+                # Provide basic career insights without ML engines
+                coaching_insights["career_guidance"] = {
+                    "basic_recommendations": [
+                        "Continue regular coding practice",
+                        "Seek feedback on recent code changes",
+                        "Consider setting specific learning goals"
+                    ],
+                    "activity_assessment": "active" if len(events) > 5 else "moderate",
+                    "general_advice": "Focus on consistent development habits and continuous learning"
+                }
+            
+        except Exception as e:
+            logger.error(f"Career coaching analysis failed: {e}")
+            # Store error state but continue
+            coaching_insights = {
+                "status": "error",
+                "error_message": str(e),
+                "coaching_session": None,
+                "career_guidance": {
+                    "basic_recommendations": ["Continue your development journey"],
+                    "general_advice": "Focus on consistent coding practice"
+                },
+                "analysis_metadata": {
+                    "analyzed_at": datetime.now().isoformat(),
+                    "coaching_available": False,
+                    "error": True
+                }
+            }
+        
+        # Create coaching message
+        coaching_msg = AIMessage(
+            content=f"Career coaching analysis complete: "
+                   f"{'Generated personalized coaching session' if coaching_insights.get('coaching_session') else 'Basic guidance provided'}"
+        )
+        
+        # Store coaching insights in state
+        new_state = dict(state)
+        new_state.update({
+            "career_coaching_insights": coaching_insights,
+            "messages": state.get("messages", []) + [coaching_msg]
+        })
+        
+        logger.info("✅ Career coaching analysis node completed")
+        return new_state
+    
     async def pattern_detection_node(self, state: MorningBriefState) -> MorningBriefState:
         """Node 3: Advanced pattern detection using LLM"""
         logger.info("🔮 Node 3: Detecting patterns...")
@@ -480,6 +642,7 @@ class MorningBriefWorkflow:
         code_analysis = state.get("code_analysis", {})
         pattern_analysis = state.get("pattern_analysis", {})
         knowledge_graph_insights = state.get("knowledge_graph_insights", {})  # NEW: KG insights
+        career_coaching_insights = state.get("career_coaching_insights", {})  # NEW: Career coaching insights
         event_stats = state.get("event_stats", {})
         
         # Generate critical insights with detailed file information
@@ -512,6 +675,36 @@ class MorningBriefWorkflow:
                 "files": [],
                 "details": coverage_gaps[:3],  # Include first 3 gaps
                 "source": "knowledge_graph"
+            })
+        
+        # Career coaching alerts and insights (NEW)
+        coaching_session = career_coaching_insights.get("coaching_session")
+        if coaching_session and coaching_session.get("action_items"):
+            critical_insights.append({
+                "type": "career_coaching",
+                "priority": "medium",
+                "title": "Personalized career guidance available",
+                "description": f"Expert coaching session generated with {len(coaching_session['action_items'])} action items",
+                "action_required": False,
+                "count": len(coaching_session.get("action_items", [])),
+                "files": [],
+                "coaching_message": coaching_session.get("coaching_message", "")[:200] + "...",  # First 200 chars
+                "source": "career_coaching"
+            })
+        
+        # Learning opportunities from career coaching (NEW)
+        learning_opportunities = coaching_session.get("learning_opportunities", []) if coaching_session else []
+        if learning_opportunities:
+            critical_insights.append({
+                "type": "learning_opportunities",
+                "priority": "low",
+                "title": f"{len(learning_opportunities)} learning opportunities identified",
+                "description": "Career coach recommends specific learning paths",
+                "action_required": False,
+                "count": len(learning_opportunities),
+                "files": [],
+                "opportunities": learning_opportunities[:3],  # Top 3 opportunities
+                "source": "career_coaching"
             })
         
         # Security issues with file details
@@ -625,6 +818,63 @@ class MorningBriefWorkflow:
                     "files": []
                 })
         
+        # Career coaching suggestions (NEW)
+        if coaching_session:
+            # Add immediate suggestions from coaching
+            immediate_suggestions = coaching_session.get("immediate_suggestions", [])
+            if immediate_suggestions:
+                suggestions.append({
+                    "type": "career_coaching",
+                    "title": "Expert career coach recommendations",
+                    "description": f"Personalized guidance with {len(immediate_suggestions)} immediate actions",
+                    "priority": "medium",
+                    "action": "follow_coaching_guidance",
+                    "source": "career_coaching",
+                    "coaching_suggestions": immediate_suggestions,
+                    "files": []
+                })
+            
+            # Add learning resource suggestions
+            resource_suggestions = coaching_session.get("resource_suggestions", [])
+            if resource_suggestions:
+                suggestions.append({
+                    "type": "learning_resources",
+                    "title": f"Recommended learning resources ({len(resource_suggestions)} items)",
+                    "description": "Curated resources to accelerate your development",
+                    "priority": "low",
+                    "action": "review_learning_resources",
+                    "source": "career_coaching",
+                    "resources": [
+                        {
+                            "title": resource["title"],
+                            "type": resource["type"],
+                            "difficulty": resource["difficulty"],
+                            "relevance_score": resource["relevance_score"],
+                            "reason": resource["personalization_reason"]
+                        }
+                        for resource in resource_suggestions[:5]  # Top 5 resources
+                    ],
+                    "files": []
+                })
+        
+        # Career guidance from coaching analysis (NEW)
+        career_guidance = career_coaching_insights.get("career_guidance", {})
+        if career_guidance and career_guidance.get("immediate_actions"):
+            suggestions.append({
+                "type": "career_development",
+                "title": "Career development action items",
+                "description": f"Strategic guidance for your professional growth",
+                "priority": "low",
+                "action": "career_planning",
+                "source": "career_coaching",
+                "guidance": {
+                    "focus_areas": career_guidance.get("focus_areas", []),
+                    "immediate_actions": career_guidance.get("immediate_actions", [])[:3],  # Top 3 actions
+                    "development_stage": career_guidance.get("development_stage", "unknown")
+                },
+                "files": []
+            })
+        
         # From security analysis
         if security_issues:
             security_files = [i for i in security_issues if i.get("severity") in ["medium", "low"]]
@@ -689,16 +939,19 @@ class MorningBriefWorkflow:
                 "files": []
             })
         
-        # Sort suggestions by priority (Knowledge Graph first, then by priority level)
+        # Sort suggestions by priority (Knowledge Graph first, Career Coaching second, then by priority level)
         priority_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         suggestions.sort(key=lambda s: (
-            1 if s.get("source") == "knowledge_graph" else 0,  # KG suggestions first
+            2 if s.get("source") == "knowledge_graph" else 1 if s.get("source") == "career_coaching" else 0,  # KG first, coaching second
             priority_order.get(s.get("priority", "low"), 1)
         ), reverse=True)
         
+        # Count career coaching suggestions
+        coaching_suggestions = [s for s in suggestions if s.get("source") == "career_coaching"]
+        
         insights_msg = AIMessage(
             content=f"Generated {len(critical_insights)} critical insights and {len(suggestions)} suggestions "
-                   f"(including {len(kg_recommendations)} from Knowledge Graph)"
+                   f"(including {len(kg_recommendations)} from Knowledge Graph and {len(coaching_suggestions)} from Career Coach)"
         )
         
         # Return new state
@@ -734,6 +987,7 @@ class MorningBriefWorkflow:
         event_stats = state.get("event_stats", {})
         code_analysis = state.get("code_analysis", {})
         knowledge_graph_insights = state.get("knowledge_graph_insights", {})  # NEW: KG insights
+        career_coaching_insights = state.get("career_coaching_insights", {})  # NEW: Career coaching insights
         critical_insights = state.get("critical_insights", [])
         suggestions = state.get("suggestions", [])
         
@@ -763,6 +1017,12 @@ class MorningBriefWorkflow:
         - Relevant documentation: {documentation_count}
         - Knowledge recommendations: {kg_recommendations_count}
         
+        Career Coaching Insights:
+        - Coaching session available: {coaching_available}
+        - Action items generated: {coaching_action_items}
+        - Learning opportunities: {learning_opportunities_count}
+        - Career guidance: {career_guidance_summary}
+        
         Critical Items Needing Attention:
         {critical_items}
         
@@ -772,11 +1032,12 @@ class MorningBriefWorkflow:
         Create a concise, friendly morning brief (2-3 paragraphs) that:
         1. Acknowledges their recent work and golden source alignment
         2. Highlights the most important items needing attention
-        3. Provides 2-3 specific, actionable recommendations (prioritizing Knowledge Graph insights)
+        3. Provides 2-3 specific, actionable recommendations (prioritizing Knowledge Graph and Career Coaching insights)
         4. Mentions relevant patterns or documentation from golden sources
-        5. Ends on an encouraging note
+        5. Includes personalized career guidance when available
+        6. Ends on an encouraging note about their development journey
         
-        Keep it conversational and supportive, emphasizing how golden sources can guide their work.
+        Keep it conversational and supportive, emphasizing how golden sources and personalized coaching can guide their work.
         """)
         
         try:
@@ -799,6 +1060,10 @@ class MorningBriefWorkflow:
             related_docs = kg_contextual.get("related_documentation", []) if kg_contextual else []
             kg_recommendations = knowledge_graph_insights.get("recommendations", [])
             
+            # Extract career coaching context
+            coaching_session = career_coaching_insights.get("coaching_session")
+            career_guidance = career_coaching_insights.get("career_guidance", {})
+            
             brief_input = {
                 "developer_id": state.get("developer_id", "unknown"),
                 "total_events": event_stats.get("total_events", 0),
@@ -814,6 +1079,11 @@ class MorningBriefWorkflow:
                 "pattern_matches_count": len(pattern_matches),
                 "documentation_count": len(related_docs),
                 "kg_recommendations_count": len(kg_recommendations),
+                # Career coaching context
+                "coaching_available": "Yes" if coaching_session else "No",
+                "coaching_action_items": len(coaching_session.get("action_items", [])) if coaching_session else 0,
+                "learning_opportunities_count": len(coaching_session.get("learning_opportunities", [])) if coaching_session else 0,
+                "career_guidance_summary": career_guidance.get("development_stage", "No guidance available"),
                 "critical_items": critical_items_text,
                 "suggestions_text": suggestions_text
             }
@@ -846,6 +1116,31 @@ class MorningBriefWorkflow:
                     "coverage_gaps_count": len(knowledge_graph_insights.get("coverage_gaps", [])),
                     "contextual_sources": kg_contextual.get("relevant_sources", []) if kg_contextual else [],
                     "context_score": kg_contextual.get("context_score", 0.0) if kg_contextual else 0.0
+                },
+                "career_coaching_insights": {  # NEW: Include Career Coaching insights in the response
+                    "coaching_session_available": coaching_session is not None,
+                    "coaching_message": coaching_session.get("coaching_message", "")[:300] + "..." if coaching_session and coaching_session.get("coaching_message") else None,
+                    "action_items_count": len(coaching_session.get("action_items", [])) if coaching_session else 0,
+                    "top_action_items": coaching_session.get("action_items", [])[:3] if coaching_session else [],
+                    "immediate_suggestions": coaching_session.get("immediate_suggestions", [])[:3] if coaching_session else [],
+                    "learning_opportunities_count": len(coaching_session.get("learning_opportunities", [])) if coaching_session else 0,
+                    "learning_opportunities": coaching_session.get("learning_opportunities", [])[:3] if coaching_session else [],
+                    "resource_suggestions_count": len(coaching_session.get("resource_suggestions", [])) if coaching_session else 0,
+                    "top_resources": [
+                        {
+                            "title": resource["title"],
+                            "type": resource["type"],
+                            "difficulty": resource["difficulty"],
+                            "relevance_score": resource["relevance_score"]
+                        } for resource in coaching_session.get("resource_suggestions", [])[:3]
+                    ] if coaching_session else [],
+                    "career_guidance": {
+                        "focus_areas": career_guidance.get("focus_areas", []),
+                        "development_stage": career_guidance.get("development_stage"),
+                        "learning_priority": career_guidance.get("learning_priority"),
+                        "coaching_frequency": career_guidance.get("coaching_frequency")
+                    } if career_guidance else {},
+                    "coaching_available": career_coaching_insights.get("analysis_metadata", {}).get("coaching_available", False)
                 },
                 "insights": {
                     "code_quality_score": 10 - len(code_analysis.get("quality_issues", [])),

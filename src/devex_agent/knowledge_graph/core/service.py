@@ -26,7 +26,14 @@ from ...config.settings import get_settings
 try:
     from ..ml.codebert_engine import CodeBERTEngine
     from ..ml.developer_intelligence import DeveloperIntelligenceEngine
-    from ..ml.models import DeveloperSkillProfile, SkillAssessment, PatternAnalysis
+    from ..ml.career_coach import ExpertCareerCoachLLM, CoachingContext
+    from ..ml.learning_path_engine import LearningPathEngine
+    from ..ml.progress_tracker import ProgressTracker
+    from ..ml.models import (
+        DeveloperSkillProfile, SkillAssessment, PatternAnalysis,
+        CoachingSession, LearningPlan, CoachingTrigger, CareerStage,
+        TimeAvailability, LearningStyle
+    )
     ML_AVAILABLE = True
 except ImportError:
     ML_AVAILABLE = False
@@ -60,6 +67,11 @@ class KnowledgeGraphService:
         # ML engines
         self.codebert_engine: Optional[CodeBERTEngine] = None
         self.developer_intelligence: Optional[DeveloperIntelligenceEngine] = None
+        
+        # Phase 2: Career coaching engines
+        self.career_coach: Optional[ExpertCareerCoachLLM] = None
+        self.learning_path_engine: Optional[LearningPathEngine] = None
+        self.progress_tracker: Optional[ProgressTracker] = None
         
         # Connector factory
         self.connector_factory: Optional[ConnectorFactory] = None
@@ -107,6 +119,7 @@ class KnowledgeGraphService:
             if ML_AVAILABLE:
                 logger.info("🤖 Initializing ML capabilities...")
                 
+                # Phase 1: CodeBERT and Developer Intelligence
                 self.codebert_engine = CodeBERTEngine()
                 await self.codebert_engine.initialize()
                 
@@ -115,9 +128,35 @@ class KnowledgeGraphService:
                 )
                 await self.developer_intelligence.initialize()
                 
-                logger.info("✅ ML capabilities initialized successfully")
+                # Phase 2: Career Coaching Engines
+                logger.info("🎯 Initializing Phase 2 Career Coaching engines...")
+                
+                # Initialize Career Coach with OpenAI API key
+                openai_api_key = getattr(self.settings, 'openai_api_key', None)
+                self.career_coach = ExpertCareerCoachLLM(
+                    openai_api_key=openai_api_key,
+                    model_name="gpt-4-turbo-preview",
+                    temperature=0.7
+                )
+                await self.career_coach.initialize()
+                
+                # Initialize Learning Path Engine
+                self.learning_path_engine = LearningPathEngine(
+                    openai_api_key=openai_api_key,
+                    use_llm_intelligence=True
+                )
+                await self.learning_path_engine.initialize()
+                
+                # Initialize Progress Tracker
+                self.progress_tracker = ProgressTracker(
+                    snapshot_retention_days=365,
+                    velocity_calculation_window_days=30
+                )
+                await self.progress_tracker.initialize()
+                
+                logger.info("✅ ML capabilities and Career Coaching engines initialized successfully")
             else:
-                logger.info("⚠️ ML capabilities not available - continuing without CodeBERT")
+                logger.info("⚠️ ML capabilities not available - continuing without CodeBERT and Career Coaching")
             
             self.is_initialized = True
             logger.info("✅ Knowledge Graph Service initialized successfully")
@@ -141,6 +180,14 @@ class KnowledgeGraphService:
             await self.developer_intelligence.cleanup()
         if self.codebert_engine:
             await self.codebert_engine.cleanup()
+            
+        # Cleanup Phase 2 engines
+        if self.progress_tracker:
+            await self.progress_tracker.cleanup()
+        if self.learning_path_engine:
+            await self.learning_path_engine.cleanup()
+        if self.career_coach:
+            await self.career_coach.cleanup()
         
         # Cleanup storage managers
         if self.vector_store:
@@ -616,6 +663,285 @@ class KnowledgeGraphService:
             logger.info(f"🔄 Starting sync for {len(sync_tasks)} sources")
             await asyncio.gather(*sync_tasks, return_exceptions=True)
             logger.info("✅ Source sync completed")
+    
+    # ===== Phase 2: Career Coaching Methods =====
+    
+    async def generate_coaching_session(self,
+                                      developer_id: str,
+                                      current_skill_profile: Optional[DeveloperSkillProfile] = None,
+                                      recent_pattern_analysis: Optional[PatternAnalysis] = None,
+                                      current_code_context: Optional[Dict[str, Any]] = None,
+                                      learning_goals: List[str] = None,
+                                      time_availability: str = "medium",
+                                      career_stage: CareerStage = CareerStage.MID,
+                                      trigger_type: CoachingTrigger = CoachingTrigger.MORNING_BRIEF,
+                                      specific_question: Optional[str] = None) -> Optional[CoachingSession]:
+        """
+        Generate a personalized coaching session using the Expert Career Coach LLM
+        
+        Args:
+            developer_id: Developer identifier
+            current_skill_profile: Current skill assessment
+            recent_pattern_analysis: Recent code pattern analysis
+            current_code_context: Current coding context
+            learning_goals: Developer's learning goals
+            time_availability: Available time for learning
+            career_stage: Current career stage
+            trigger_type: What triggered this coaching session
+            specific_question: Optional specific question from developer
+            
+        Returns:
+            CoachingSession: Generated coaching session or None if not available
+        """
+        if not ML_AVAILABLE or not self.career_coach:
+            logger.warning("Career coaching not available - ML engines not initialized")
+            return None
+        
+        logger.info(f"🎯 Generating coaching session for developer: {developer_id}")
+        
+        try:
+            # Build coaching context
+            context = CoachingContext(
+                developer_id=developer_id,
+                current_skill_profile=current_skill_profile,
+                recent_pattern_analysis=recent_pattern_analysis,
+                current_code_context=current_code_context,
+                learning_goals=learning_goals or [],
+                time_availability=time_availability,
+                career_stage=career_stage,
+                trigger_type=trigger_type
+            )
+            
+            # Generate coaching session
+            coaching_session = await self.career_coach.generate_coaching_session(
+                context=context,
+                specific_question=specific_question
+            )
+            
+            logger.info(f"✅ Coaching session generated for {developer_id}")
+            return coaching_session
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to generate coaching session: {e}")
+            raise
+    
+    async def generate_learning_plan(self,
+                                   developer_id: str,
+                                   current_skills: Dict[str, SkillAssessment],
+                                   target_skills: Dict[str, float],
+                                   career_stage: CareerStage,
+                                   time_availability: TimeAvailability,
+                                   learning_style: LearningStyle,
+                                   learning_goals: List[str],
+                                   timeline_weeks: Optional[int] = None) -> Optional[LearningPlan]:
+        """
+        Generate a personalized learning plan using the Learning Path Engine
+        
+        Args:
+            developer_id: Developer identifier
+            current_skills: Current skill assessments
+            target_skills: Target skill levels
+            career_stage: Current career stage
+            time_availability: Available time for learning
+            learning_style: Preferred learning approach
+            learning_goals: Specific learning goals
+            timeline_weeks: Optional target timeline
+            
+        Returns:
+            LearningPlan: Generated learning plan or None if not available
+        """
+        if not ML_AVAILABLE or not self.learning_path_engine:
+            logger.warning("Learning path generation not available - ML engines not initialized")
+            return None
+        
+        logger.info(f"📋 Generating learning plan for developer: {developer_id}")
+        
+        try:
+            learning_plan = await self.learning_path_engine.generate_learning_plan(
+                developer_id=developer_id,
+                current_skills=current_skills,
+                target_skills=target_skills,
+                career_stage=career_stage,
+                time_availability=time_availability,
+                learning_style=learning_style,
+                learning_goals=learning_goals,
+                timeline_weeks=timeline_weeks
+            )
+            
+            logger.info(f"✅ Learning plan generated for {developer_id}: {len(learning_plan.learning_path)} steps")
+            return learning_plan
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to generate learning plan: {e}")
+            raise
+    
+    async def track_progress_snapshot(self,
+                                    developer_id: str,
+                                    current_skills: Dict[str, SkillAssessment],
+                                    learning_plan: Optional[LearningPlan] = None,
+                                    completed_milestones: List[str] = None,
+                                    notes: Optional[str] = None) -> Optional[Any]:
+        """
+        Record a progress snapshot for tracking developer learning progress
+        
+        Args:
+            developer_id: Developer identifier
+            current_skills: Current skill assessments
+            learning_plan: Current learning plan
+            completed_milestones: Recently completed milestone IDs
+            notes: Optional progress notes
+            
+        Returns:
+            ProgressSnapshot: Recorded snapshot or None if not available
+        """
+        if not ML_AVAILABLE or not self.progress_tracker:
+            logger.warning("Progress tracking not available - ML engines not initialized")
+            return None
+        
+        logger.info(f"📈 Recording progress snapshot for developer: {developer_id}")
+        
+        try:
+            snapshot = await self.progress_tracker.record_progress_snapshot(
+                developer_id=developer_id,
+                current_skills=current_skills,
+                learning_plan=learning_plan,
+                completed_milestones=completed_milestones or [],
+                notes=notes
+            )
+            
+            logger.info(f"✅ Progress snapshot recorded for {developer_id}")
+            return snapshot
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to record progress snapshot: {e}")
+            raise
+    
+    async def analyze_learning_progress(self,
+                                      developer_id: str,
+                                      time_period_days: int = 90) -> Optional[Dict[str, Any]]:
+        """
+        Analyze learning progress trends for a developer
+        
+        Args:
+            developer_id: Developer identifier
+            time_period_days: Analysis time period in days
+            
+        Returns:
+            Dict containing trend analysis or None if not available
+        """
+        if not ML_AVAILABLE or not self.progress_tracker:
+            logger.warning("Progress analysis not available - ML engines not initialized")
+            return None
+        
+        logger.info(f"📊 Analyzing learning progress for developer: {developer_id}")
+        
+        try:
+            progress_analysis = await self.progress_tracker.analyze_progress_trends(
+                developer_id=developer_id,
+                time_period_days=time_period_days
+            )
+            
+            logger.info(f"✅ Progress analysis completed for {developer_id}")
+            return progress_analysis
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to analyze learning progress: {e}")
+            raise
+    
+    async def predict_learning_timeline(self,
+                                      developer_id: str,
+                                      target_skills: Dict[str, float],
+                                      confidence_level: float = 0.8) -> Optional[Dict[str, Any]]:
+        """
+        Predict learning timeline for target skills based on current velocity
+        
+        Args:
+            developer_id: Developer identifier
+            target_skills: Target skill levels
+            confidence_level: Prediction confidence level
+            
+        Returns:
+            Dict containing timeline predictions or None if not available
+        """
+        if not ML_AVAILABLE or not self.progress_tracker:
+            logger.warning("Timeline prediction not available - ML engines not initialized")
+            return None
+        
+        logger.info(f"🔮 Predicting learning timeline for developer: {developer_id}")
+        
+        try:
+            timeline_prediction = await self.progress_tracker.predict_learning_timeline(
+                developer_id=developer_id,
+                target_skills=target_skills,
+                confidence_level=confidence_level
+            )
+            
+            logger.info(f"✅ Timeline prediction completed for {developer_id}")
+            return timeline_prediction
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to predict learning timeline: {e}")
+            raise
+    
+    async def get_coaching_history(self, 
+                                 developer_id: str, 
+                                 limit: int = 10) -> Optional[List[CoachingSession]]:
+        """
+        Get coaching session history for a developer
+        
+        Args:
+            developer_id: Developer identifier
+            limit: Maximum number of sessions to return
+            
+        Returns:
+            List of coaching sessions or None if not available
+        """
+        if not ML_AVAILABLE or not self.career_coach:
+            logger.warning("Coaching history not available - ML engines not initialized")
+            return None
+        
+        try:
+            coaching_history = await self.career_coach.get_coaching_history(
+                developer_id=developer_id,
+                limit=limit
+            )
+            
+            logger.info(f"📚 Retrieved {len(coaching_history)} coaching sessions for {developer_id}")
+            return coaching_history
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get coaching history: {e}")
+            return None
+    
+    async def get_progress_alerts(self,
+                                developer_id: str,
+                                include_resolved: bool = False) -> Optional[List[Any]]:
+        """
+        Get progress alerts for a developer
+        
+        Args:
+            developer_id: Developer identifier
+            include_resolved: Include resolved alerts
+            
+        Returns:
+            List of progress alerts or None if not available
+        """
+        if not ML_AVAILABLE or not self.progress_tracker:
+            logger.warning("Progress alerts not available - ML engines not initialized")
+            return None
+        
+        try:
+            alerts = await self.progress_tracker.get_progress_alerts(
+                developer_id=developer_id,
+                include_resolved=include_resolved
+            )
+            
+            logger.info(f"🚨 Retrieved {len(alerts)} progress alerts for {developer_id}")
+            return alerts
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get progress alerts: {e}")
+            return None
     
     # ===== ML & Developer Intelligence Methods =====
     
