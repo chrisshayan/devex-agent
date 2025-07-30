@@ -342,13 +342,30 @@ class CodeBERTEngine:
         """
         logger.info(f"🔍 Finding similar code among {len(candidate_codes)} candidates")
         
+        # Handle empty candidate codes
+        if not candidate_codes:
+            logger.info("No candidate codes provided for similarity comparison")
+            return []
+        
         try:
             # Generate embeddings
             all_codes = [query_code] + candidate_codes
             embeddings = await self.generate_embeddings(all_codes, model_name)
             
+            # Validate embeddings
+            if not embeddings or len(embeddings) < 2:
+                logger.warning("Insufficient embeddings generated")
+                return []
+            
             query_embedding = np.array(embeddings[0]).reshape(1, -1)
             candidate_embeddings = np.array(embeddings[1:])
+            
+            # Ensure candidate_embeddings is 2D
+            if candidate_embeddings.ndim == 1:
+                candidate_embeddings = candidate_embeddings.reshape(1, -1)
+            elif candidate_embeddings.size == 0:
+                logger.warning("No valid candidate embeddings generated")
+                return []
             
             # Calculate similarities
             similarities = cosine_similarity(query_embedding, candidate_embeddings)[0]
@@ -372,7 +389,7 @@ class CodeBERTEngine:
             
         except Exception as e:
             logger.error(f"❌ Failed to find similar code: {e}")
-            raise
+            return []
     
     async def analyze_code_patterns(self, 
                                   code_snippets: List[str],

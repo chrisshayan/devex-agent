@@ -944,9 +944,28 @@ class LearningPathEngine:
             messages = prompt.format_messages(skill_name=skill_name)
             response = await self.llm.ainvoke(messages)
             
-            # Parse JSON response
+            # Extract JSON from response (handle cases where LLM adds extra text)
             import json
-            focus_areas = json.loads(response.content.strip())
+            import re
+            
+            content = response.content.strip()
+            logger.debug(f"Raw LLM response for focus areas: {content[:200]}...")
+            
+            # Try to extract JSON array from the response
+            json_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+            else:
+                # If no JSON array found, try object notation
+                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                else:
+                    # Assume the entire content is JSON
+                    json_str = content
+            
+            # Parse JSON response
+            focus_areas = json.loads(json_str)
             
             # Validate it's a list of strings
             if isinstance(focus_areas, list) and all(isinstance(area, str) for area in focus_areas):
@@ -959,6 +978,7 @@ class LearningPathEngine:
                 
         except Exception as e:
             logger.error(f"Failed to generate focus areas for {skill_name} via LLM: {e}")
+            logger.debug(f"Response content: {response.content if 'response' in locals() else 'No response'}")
             # Fall back to static method
             return self._get_skill_focus_areas_static(skill_name)
     
@@ -976,7 +996,52 @@ class LearningPathEngine:
         
         return focus_areas.get(skill_name.lower(), ["Core concepts", "Best practices", "Practical application"])
     
-    # ===== LLM-Powered Skill Intelligence Methods =====
+    def _extract_json_from_llm_response(self, content: str, expected_type: str = "any") -> Any:
+        """
+        Utility to extract and parse JSON from LLM responses that may contain extra text
+        
+        Args:
+            content: Raw LLM response content
+            expected_type: "array", "object", or "any"
+        
+        Returns:
+            Parsed JSON data
+        
+        Raises:
+            ValueError: If JSON cannot be extracted or parsed
+        """
+        import json
+        import re
+        
+        content = content.strip()
+        
+        # Try different JSON extraction patterns based on expected type
+        patterns = []
+        if expected_type in ["array", "any"]:
+            patterns.append(r'\[.*?\]')
+        if expected_type in ["object", "any"]:
+            patterns.append(r'\{.*?\}')
+        
+        json_str = None
+        for pattern in patterns:
+            json_match = re.search(pattern, content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+                break
+        
+        # If no pattern matched, assume entire content is JSON
+        if json_str is None:
+            json_str = content
+        
+        # Attempt to parse JSON
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parsing failed: {e}")
+            logger.debug(f"Attempted to parse: {json_str[:200]}...")
+            raise ValueError(f"Could not extract valid JSON from LLM response: {e}")
+    
+    # ===== LLM-Powered Methods with Enhanced Error Handling =====
     
     async def _initialize_llm_skill_data(self):
         """Initialize all skill data using LLM intelligence"""
@@ -1005,7 +1070,10 @@ class LearningPathEngine:
     
     @cached(ttl=86400)  # Cache for 24 hours
     async def _generate_skill_dependencies_llm(self) -> Dict[str, List[str]]:
-        """Generate skill dependency graph using LLM with SFIA framework inspiration"""
+        """Generate skill dependencies using LLM with SFIA framework"""
+        cache_key = "skill_dependencies_llm"
+        if cache_key in self._llm_cache:
+            return self._llm_cache[cache_key]
         
         prompt = ChatPromptTemplate.from_template("""
         You are an expert software engineering career coach with deep knowledge of the SFIA (Skills Framework for the Information Age) framework.
@@ -1044,25 +1112,41 @@ class LearningPathEngine:
             messages = prompt.format_messages()
             response = await self.llm.ainvoke(messages)
             
-            # Parse JSON response
-            import json
-            dependencies = json.loads(response.content.strip())
+            # Extract and parse JSON using utility
+            content = response.content.strip()
+            logger.debug(f"Raw LLM response: {content[:200]}...")
             
-            logger.info(f"🔗 Generated {len(dependencies)} skill dependencies via LLM")
-            return dependencies
+            dependencies = self._extract_json_from_llm_response(content, "object")
+            
+            # Validate the structure
+            if isinstance(dependencies, dict):
+                # Cache the result
+                self._llm_cache[cache_key] = dependencies
+                logger.info(f"🔗 Generated {len(dependencies)} skill dependencies via LLM")
+                return dependencies
+            else:
+                raise ValueError("Response is not a dictionary")
             
         except Exception as e:
             logger.error(f"Failed to generate skill dependencies via LLM: {e}")
+            logger.debug(f"Response content: {response.content if 'response' in locals() else 'No response'}")
             # Return basic fallback
             return {
                 "react": ["javascript", "html", "css"],
                 "django": ["python"],
-                "kubernetes": ["docker", "linux"]
+                "kubernetes": ["docker", "linux"],
+                "typescript": ["javascript"],
+                "flask": ["python"],
+                "aws": ["cloud_fundamentals"],
+                "testing": ["programming_fundamentals"]
             }
     
     @cached(ttl=86400)  # Cache for 24 hours
     async def _generate_time_estimates_llm(self) -> Dict[str, int]:
         """Generate learning time estimates using LLM with industry standards"""
+        cache_key = "time_estimates_llm"
+        if cache_key in self._llm_cache:
+            return self._llm_cache[cache_key]
         
         prompt = ChatPromptTemplate.from_template("""
         You are an expert software engineering educator with 15+ years of experience training developers.
@@ -1106,9 +1190,11 @@ class LearningPathEngine:
             messages = prompt.format_messages()
             response = await self.llm.ainvoke(messages)
             
-            # Parse JSON response
-            import json
-            time_estimates = json.loads(response.content.strip())
+            # Extract and parse JSON using utility  
+            content = response.content.strip()
+            logger.debug(f"Raw LLM response for time estimates: {content[:200]}...")
+            
+            time_estimates = self._extract_json_from_llm_response(content, "object")
             
             # Convert values to integers and validate
             validated_estimates = {}
@@ -1118,15 +1204,20 @@ class LearningPathEngine:
                 except (ValueError, TypeError):
                     validated_estimates[skill] = 8  # Default fallback
             
+            # Cache the result
+            self._llm_cache[cache_key] = validated_estimates
             logger.info(f"⏱️ Generated time estimates for {len(validated_estimates)} skills via LLM")
             return validated_estimates
             
         except Exception as e:
             logger.error(f"Failed to generate time estimates via LLM: {e}")
+            logger.debug(f"Response content: {response.content if 'response' in locals() else 'No response'}")
             # Return basic fallback
             return {
                 "python": 12, "javascript": 8, "react": 6, "docker": 4,
-                "kubernetes": 10, "machine_learning": 16, "testing": 6
+                "kubernetes": 10, "typescript": 6, "django": 8, "flask": 6,
+                "aws": 12, "testing": 4, "security": 8, "machine_learning": 16,
+                "sql": 6, "mongodb": 4, "api_design": 5, "system_design": 12
             }
     
     @cached(ttl=86400)  # Cache for 24 hours  
