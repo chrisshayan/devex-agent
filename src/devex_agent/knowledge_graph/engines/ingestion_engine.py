@@ -4,6 +4,7 @@ Ingestion Engine - Handles content ingestion from various sources (Stub Implemen
 
 import logging
 from typing import Dict, Any, Optional
+from datetime import datetime
 
 from ..core.models import GoldenSourceConfig
 
@@ -45,7 +46,6 @@ class IngestionEngine:
         logger.info(f"📥 Ingesting content from source: {source_config.id}")
         
         from ..core.models import IngestionResult
-        from datetime import datetime
         import time
         
         start_time = time.time()

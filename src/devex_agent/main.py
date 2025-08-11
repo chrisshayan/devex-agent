@@ -1405,126 +1405,102 @@ async def get_knowledge_graph_insights(developer_id: str):
     """Get comprehensive Knowledge Graph insights for a developer"""
     try:
         logger.info(f"🧠 Getting Knowledge Graph insights for: {developer_id}")
-        
-        # Get real analytics data
+
         analytics = None
         recommendations = []
         relationship_metrics = {}
-        
+
+        # 1) Usage analytics
         try:
             analytics = await knowledge_graph.get_usage_analytics(developer_id)
             logger.info("✅ Got usage analytics from Knowledge Graph")
         except Exception as e:
             logger.warning(f"⚠️ Could not get usage analytics: {e}")
-        
-        # Generate real recommendations based on developer analysis
+
+        # 2) Collect real code snippets from the workspace for analysis
+        code_snippets: list[str] = []
         try:
-            # Analyze developer's current code patterns
-            code_analysis = await knowledge_graph.analyze_developer_code(
-                developer_id=developer_id,
-                project_path=".",
-                include_recent_changes=True
-            )
-            
-            if code_analysis:
-                # Generate recommendations based on actual analysis
-                if hasattr(code_analysis, 'improvement_suggestions'):
-                    for suggestion in code_analysis.improvement_suggestions:
-                        recommendations.append({
-                            "title": suggestion.get('title', 'Code Improvement'),
-                            "description": suggestion.get('description', 'Recommended improvement'),
-                            "type": suggestion.get('category', 'general'),
-                            "source": "code_analysis",
-                            "confidence": suggestion.get('confidence', 0.8)
-                        })
-                
-                # Generate pattern-based recommendations
-                if hasattr(code_analysis, 'pattern_matches'):
-                    for pattern, confidence in code_analysis.pattern_matches.items():
-                        if confidence < 0.7:  # Low confidence patterns need improvement
-                            recommendations.append({
-                                "title": f"Improve {pattern.replace('_', ' ').title()} Pattern",
-                                "description": f"Current confidence: {int(confidence*100)}%. Consider reviewing best practices.",
-                                "type": "pattern_improvement",
-                                "source": "pattern_analysis",
-                                "confidence": 1.0 - confidence
-                            })
-                
-                # Generate skill-based recommendations
-                if hasattr(code_analysis, 'skill_gaps'):
-                    for skill, gap_info in code_analysis.skill_gaps.items():
+            import os, re
+            for root, _, files in os.walk("."):
+                if len(code_snippets) >= 12:
+                    break
+                for f in files:
+                    if f.endswith((".ts", ".tsx", ".js", ".jsx", ".py")):
+                        try:
+                            with open(os.path.join(root, f), "r", encoding="utf-8") as fh:
+                                text = fh.read()
+                                patterns = re.findall(r'(useState\([^)]*\)|useEffect\([^}]*\}|interface \w+\s*\{|class \w+\s*\{|def \w+\([^)]*\))', text)
+                                if patterns:
+                                    code_snippets.extend(patterns[:3])
+                                    if len(code_snippets) >= 12:
+                                        break
+                        except Exception:
+                            continue
+        except Exception as e:
+            logger.warning(f"⚠️ Could not extract local code snippets: {e}")
+
+        # 3) Recommendations via skill and pattern analysis
+        try:
+            if code_snippets:
+                # Assess skills
+                skill_assessment = await knowledge_graph.assess_developer_skills(
+                    developer_id=developer_id,
+                    code_snippets=code_snippets,
+                )
+                if skill_assessment and hasattr(skill_assessment, 'skill_gaps'):
+                    for skill, gap_info in skill_assessment.skill_gaps.items():
                         recommendations.append({
                             "title": f"Enhance {skill.replace('_', ' ').title()} Skills",
                             "description": gap_info.get('description', f"Opportunities to improve {skill} proficiency"),
                             "type": "skill_development",
                             "source": "skill_analysis",
-                            "confidence": gap_info.get('importance', 0.8)
+                            "confidence": gap_info.get('importance', 0.8),
                         })
-            
-        except Exception as e:
-            logger.warning(f"⚠️ Could not perform code analysis: {e}")
-        
-        # Get real relationship metrics from knowledge graph
-        try:
-            # Get pattern analysis
-            pattern_matches = await knowledge_graph.find_similar_code_patterns(
-                developer_id=developer_id,
-                code_snippet="# Sample for pattern analysis"
-            )
-            
-            # Get skill assessment
-            skill_assessment = await knowledge_graph.assess_developer_skills(
-                developer_id=developer_id,
-                include_recommendations=True
-            )
-            
-            # Get golden sources
+
+                # Simple pattern insights from one snippet
+                query = code_snippets[0]
+                pattern_matches = await knowledge_graph.find_similar_code_patterns(
+                    query_code=query,
+                    developer_id=developer_id,
+                    threshold=0.7,
+                )
+            else:
+                skill_assessment = None
+                pattern_matches = []
+
+            # Relationship metrics
             golden_sources = await knowledge_graph.list_golden_sources()
-            
-            # Calculate real metrics
             relationship_metrics = {
                 "code_patterns": len(pattern_matches) if pattern_matches else 0,
                 "similar_developers": analytics.get("similar_developers", 0) if analytics else 0,
                 "golden_sources": len(golden_sources) if golden_sources else 0,
-                "skill_confidence": int(skill_assessment.overall_confidence * 100) if skill_assessment and hasattr(skill_assessment, 'overall_confidence') else 0
+                "skill_confidence": int(getattr(skill_assessment, 'overall_confidence', 0) * 100) if skill_assessment else 0,
             }
-            
         except Exception as e:
-            logger.warning(f"⚠️ Could not get relationship metrics: {e}")
-            # Minimal fallback using available analytics
+            logger.warning(f"⚠️ Analysis fallback path: {e}")
             relationship_metrics = {
-                "code_patterns": analytics.get("total_queries", 0) if analytics else 0,
+                "code_patterns": 0,
                 "similar_developers": analytics.get("active_developers", 0) if analytics else 0,
-                "golden_sources": analytics.get("sources_used", 0) if analytics else 0,
-                "skill_confidence": analytics.get("avg_confidence", 0) if analytics else 0
+                "golden_sources": analytics.get("total_sources", 0) if analytics else 0,
+                "skill_confidence": 0,
             }
-        
-        # If no recommendations were generated, provide minimal guidance
+
         if not recommendations:
-            logger.info("🔄 No specific recommendations available, providing general guidance")
-            recommendations = [
-                {
-                    "title": "Code Analysis Pending",
-                    "description": "Enable code monitoring to receive personalized recommendations",
-                    "type": "setup",
-                    "source": "system",
-                    "confidence": 1.0
-                }
-            ]
-        
+            recommendations = [{
+                "title": "Enable code monitoring",
+                "description": "Connect your repository or select a folder to receive personalized insights.",
+                "type": "setup",
+                "source": "system",
+                "confidence": 1.0,
+            }]
+
         return {
             "status": "success",
             "developer_id": developer_id,
-            "recommendations": recommendations[:10],  # Limit to top 10
+            "recommendations": recommendations[:10],
             "relationship_metrics": relationship_metrics,
             "analytics": analytics,
             "generated_at": datetime.now().isoformat(),
-            "data_sources": {
-                "code_analysis": bool(recommendations and any(r["source"] == "code_analysis" for r in recommendations)),
-                "pattern_analysis": bool(recommendations and any(r["source"] == "pattern_analysis" for r in recommendations)),
-                "skill_analysis": bool(recommendations and any(r["source"] == "skill_analysis" for r in recommendations)),
-                "usage_analytics": bool(analytics)
-            }
         }
         
     except Exception as e:
@@ -2478,11 +2454,31 @@ async def get_golden_sources_list(developer_id: str):
                 except Exception:
                     pass
                 
+                # Map source config fields to generic response
+                cfg = source.config if isinstance(source.config, dict) else source.config
+                try:
+                    cfg_name = getattr(cfg, 'name', None) if not isinstance(cfg, dict) else cfg.get('name')
+                except Exception:
+                    cfg_name = None
+                # Determine display URL per source type
+                try:
+                    if source.type.value == 'github':
+                        repo = getattr(cfg, 'repository', None) if not isinstance(cfg, dict) else cfg.get('repository')
+                        display_url = f"https://github.com/{repo}" if repo else None
+                    elif source.type.value == 'confluence':
+                        display_url = getattr(cfg, 'base_url', None) if not isinstance(cfg, dict) else cfg.get('base_url')
+                    elif source.type.value == 'file':
+                        display_url = getattr(cfg, 'path', None) if not isinstance(cfg, dict) else cfg.get('path')
+                    else:
+                        display_url = None
+                except Exception:
+                    display_url = None
+
                 detailed_sources.append({
                     "id": source.id,
-                    "name": source.name,
-                    "type": source.source_type.value,
-                    "url": source.url,
+                    "name": cfg_name or getattr(source, 'name', source.id),
+                    "type": source.type.value,
+                    "url": display_url,
                     "status": health.get("status", "unknown"),
                     "last_sync": health.get("last_sync"),
                     "alignment_score": alignment_score,
@@ -2492,18 +2488,36 @@ async def get_golden_sources_list(developer_id: str):
                     "config": {
                         "auto_sync": source.auto_sync,
                         "sync_frequency": "daily" if source.auto_sync else "manual",
-                        "quality_threshold": source.quality_threshold if hasattr(source, 'quality_threshold') else 0.8
+                        "quality_threshold": getattr(source, 'quality_threshold', 0.8)
                     }
                 })
                 
             except Exception as e:
                 logger.warning(f"⚠️ Could not get health for source {source.id}: {e}")
                 # Add source with basic data
+                cfg = source.config if isinstance(source.config, dict) else source.config
+                try:
+                    cfg_name = getattr(cfg, 'name', None) if not isinstance(cfg, dict) else cfg.get('name')
+                except Exception:
+                    cfg_name = None
+                try:
+                    if source.type.value == 'github':
+                        repo = getattr(cfg, 'repository', None) if not isinstance(cfg, dict) else cfg.get('repository')
+                        display_url = f"https://github.com/{repo}" if repo else None
+                    elif source.type.value == 'confluence':
+                        display_url = getattr(cfg, 'base_url', None) if not isinstance(cfg, dict) else cfg.get('base_url')
+                    elif source.type.value == 'file':
+                        display_url = getattr(cfg, 'path', None) if not isinstance(cfg, dict) else cfg.get('path')
+                    else:
+                        display_url = None
+                except Exception:
+                    display_url = None
+
                 detailed_sources.append({
                     "id": source.id,
-                    "name": source.name,
-                    "type": source.source_type.value,
-                    "url": source.url,
+                    "name": cfg_name or getattr(source, 'name', source.id),
+                    "type": source.type.value,
+                    "url": display_url,
                     "status": "unknown",
                     "last_sync": None,
                     "alignment_score": 75,

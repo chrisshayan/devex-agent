@@ -108,6 +108,32 @@ export async function fetchGoldenSourcesList(developerId: string) {
   return await apiRequest(`/api/v1/analytics/golden-sources-list/${developerId}`);
 }
 
+// Golden Source management APIs
+export async function registerGoldenSource(payload: any) {
+  return await apiRequest(`/api/v1/knowledge-graph/sources`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateGoldenSource(sourceId: string, updates: any) {
+  return await apiRequest(`/api/v1/knowledge-graph/sources/${sourceId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function ingestGoldenSource(sourceId: string, force: boolean = true) {
+  const query = force ? `?force=${encodeURIComponent(String(force))}` : ''
+  return await apiRequest(`/api/v1/knowledge-graph/sources/${sourceId}/ingest${query}`, {
+    method: 'POST',
+  });
+}
+
+export async function getGoldenSourceHealth(sourceId: string) {
+  return await apiRequest(`/api/v1/knowledge-graph/sources/${sourceId}/health`);
+}
+
 // Additional functions needed by DeveloperAnalytics component
 export async function fetchDeveloperDashboard(developerId: string) {
   // This can use the analytics dashboard endpoint

@@ -156,12 +156,28 @@ class DeveloperIntelligenceEngine:
                 code_snippets, developer_id
             )
             
+            # Normalize dominant pattern structure (list expected by model)
+            raw_dominant = pattern_data.get("dominant_patterns", [])
+            if isinstance(raw_dominant, dict):
+                dominant_patterns: List[Dict[str, Any]] = []
+                for pattern_id, info in raw_dominant.items():
+                    entry: Dict[str, Any] = {"pattern_id": pattern_id}
+                    if isinstance(info, dict):
+                        entry.update(info)
+                    else:
+                        entry["pattern_description"] = str(info)
+                    dominant_patterns.append(entry)
+            elif isinstance(raw_dominant, list):
+                dominant_patterns = raw_dominant
+            else:
+                dominant_patterns = []
+
             # Create pattern analysis model
             pattern_analysis = PatternAnalysis(
                 developer_id=developer_id,
                 analysis_id=f"analysis_{developer_id}_{int(datetime.now().timestamp())}",
                 analyzed_at=datetime.now(),
-                dominant_patterns=pattern_data.get("dominant_patterns", []),
+                dominant_patterns=dominant_patterns,
                 architectural_preferences=pattern_data.get("architectural_patterns", {}),
                 naming_conventions=self._analyze_naming_conventions(code_snippets),
                 complexity_preferences=pattern_data.get("complexity_patterns", {}),

@@ -7,20 +7,17 @@ import {
   XCircle,
   Settings,
   Activity,
-  TrendingUp,
-  Clock,
+  
   Star,
   Database,
   Globe,
   FileText,
-  BarChart3,
-  Edit,
-  Trash2,
+  
   Plus,
   RefreshCw
 } from 'lucide-react'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { fetchGoldenSourcesList } from '../services/api'
+import { fetchGoldenSourcesList, registerGoldenSource, ingestGoldenSource, getGoldenSourceHealth } from '../services/api'
 
 interface GoldenSource {
   id: string
@@ -40,13 +37,13 @@ interface GoldenSource {
   }
 }
 
-interface SourceHealth {
-  uptime: number
-  response_time: number
-  success_rate: number
-  last_error?: string
-  sync_status: 'syncing' | 'completed' | 'failed' | 'idle'
-}
+// interface SourceHealth {
+//   uptime: number
+//   response_time: number
+//   success_rate: number
+//   last_error?: string
+//   sync_status: 'syncing' | 'completed' | 'failed' | 'idle'
+// }
 
 export default function GoldenSourcesManagement() {
   const { developerId } = useParams<{ developerId: string }>()
@@ -135,44 +132,55 @@ export default function GoldenSourcesManagement() {
 
   const handleAddSource = async () => {
     try {
-      // In a real implementation, this would call an API to add the source
-      const newSourceData: GoldenSource = {
-        id: `new-source-${Date.now()}`,
-        name: newSource.name,
-        type: newSource.type,
-        url: newSource.url,
-        status: 'healthy',
-        last_sync: new Date().toISOString(),
-        alignment_score: 85,
-        total_documents: 0,
-        last_update: new Date().toISOString(),
+      // Map UI form to backend GoldenSourceConfig schema
+      const type = newSource.type === 'documentation' ? 'file' : newSource.type
+      const payload: any = {
+        type,
+        priority: 'medium',
+        auto_sync: newSource.auto_sync,
+        sync_interval: newSource.auto_sync ? '1d' : '7d',
         enabled: true,
-        config: {
-          auto_sync: newSource.auto_sync,
-          sync_frequency: newSource.auto_sync ? 'daily' : 'manual',
-          quality_threshold: newSource.quality_threshold
-        }
+        // source-specific config
+        config: type === 'github'
+          ? {
+              name: newSource.name,
+              repository: newSource.url.replace('https://github.com/',''),
+              branch: 'main',
+              include_patterns: [],
+              exclude_patterns: [],
+              include_issues: true,
+              include_prs: true,
+              include_wiki: true
+            }
+          : type === 'confluence'
+          ? {
+              name: newSource.name,
+              base_url: newSource.url,
+              space_key: 'DOCS',
+              page_filter: undefined,
+              username: '',
+              api_token: '',
+              include_attachments: true,
+              include_comments: false
+            }
+          : {
+              name: newSource.name,
+              path: newSource.url || '.',
+              include_extensions: ['.md', '.txt', '.py', '.ts', '.tsx'],
+              exclude_directories: ['.git','node_modules','dist','build','__pycache__'],
+              recursive: true
+            }
       }
-      
-      // Add to sources list
-      setSources([...sources, newSourceData])
-      
-      // Reset form and close modal
-      setNewSource({
-        name: '',
-        type: 'github',
-        url: '',
-        auto_sync: true,
-        quality_threshold: 0.8
-      })
+
+      await registerGoldenSource(payload)
+
+      // Refresh list from backend
+      await loadGoldenSources()
+
       setShowAddModal(false)
-      
-      // Show success message
-      alert(`✅ Golden source "${newSource.name}" added successfully! In a production system, this would be synced with the backend.`)
-      
     } catch (err) {
       console.error('Error adding source:', err)
-      alert('❌ Failed to add golden source. Please try again.')
+      alert('❌ Failed to add golden source. Please check configuration and try again.')
     }
   }
 
@@ -207,8 +215,19 @@ export default function GoldenSourcesManagement() {
   }
 
   const handleSync = async (sourceId: string) => {
-    // Implementation for triggering sync
-    console.log('Syncing source:', sourceId)
+    try {
+      await ingestGoldenSource(sourceId, true)
+      // Optionally poll health to update last_sync and counts
+      setTimeout(async () => {
+        try {
+          await getGoldenSourceHealth(sourceId)
+          await loadGoldenSources()
+        } catch {}
+      }, 1500)
+    } catch (err) {
+      console.error('Sync failed:', err)
+      alert('❌ Sync failed. Please check backend logs for details.')
+    }
   }
 
   const handleToggleEnabled = async (sourceId: string) => {

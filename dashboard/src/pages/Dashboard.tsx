@@ -178,59 +178,60 @@ export default function Dashboard() {
     }
 
     const loadKnowledgeGraph = async () => {
-      try {
-        setKgLoading(true)
-        setKgError(null)
-        
-        // Load all Knowledge Graph data in parallel
-        const [insights, alignment, patterns, sourcesList] = await Promise.all([
-          fetchKnowledgeGraphInsights(developerId),
-          fetchGoldenSourceAlignment(developerId),
-          fetchPatternMatches(developerId),
-          fetchGoldenSourcesList(developerId).catch(() => null) // Don't fail if this API is unavailable
-        ])
-        
-        // Get real golden sources count
-        const realSourcesCount = sourcesList?.sources?.length || 0
-        
-        // Combine the data
-        const kgData: KnowledgeGraphData = {
-          golden_source_alignment: alignment?.overall_score ? {
-            overall_score: alignment.overall_score,
-            categories: alignment.categories || []
-          } : {
-            overall_score: 90,
-            categories: [
-              { name: 'React Best Practices', score: 95 },
-              { name: 'TypeScript Patterns', score: 88 },
-              { name: 'Testing Standards', score: 87 }
-            ]
-          },
-          pattern_matches: patterns?.pattern_matches || [
-            { pattern_name: 'Async/Await Pattern', confidence: 95, description: 'Similar to Netflix codebase', source_reference: 'Netflix React Patterns', status: 'positive' },
-            { pattern_name: 'Error Boundary Usage', confidence: 88, description: 'Matches Airbnb standards', source_reference: 'Airbnb Style Guide', status: 'positive' },
-            { pattern_name: 'State Management', confidence: 72, description: 'Could improve with Redux pattern', source_reference: 'Redux Best Practices', status: 'opportunity' }
-          ],
-          recommendations: insights?.recommendations || [
-            { title: 'Study: React Hooks Patterns', description: 'Based on your recent useState usage', type: 'learning' },
-            { title: 'Optimize: Bundle Size', description: 'Webpack best practices from Spotify', type: 'performance' },
-            { title: 'Implement: E2E Testing', description: 'Cypress patterns from GitHub repo', type: 'testing' }
-          ],
-          relationship_metrics: insights?.relationship_metrics || {
-            code_patterns: 47,
-            similar_developers: 23,
-            golden_sources: realSourcesCount, // Use real count instead of hardcoded 156
-            skill_confidence: 89
-          }
-        }
-        
-        setKnowledgeGraph(kgData)
-      } catch (err) {
+      setKgLoading(true)
+      setKgError(null)
+
+      let insights: any = null
+      let alignment: any = null
+      let patterns: any = null
+      let sourcesList: any = null
+
+      // Fetch independently so one failure doesn't blank the whole widget
+      try { insights = await fetchKnowledgeGraphInsights(developerId) } catch (e) { console.warn('KG insights failed', e) }
+      try { alignment = await fetchGoldenSourceAlignment(developerId) } catch (e) { console.warn('KG alignment failed', e) }
+      try { patterns = await fetchPatternMatches(developerId) } catch (e) { console.warn('KG patterns failed', e) }
+      try { sourcesList = await fetchGoldenSourcesList(developerId) } catch (e) { /* optional */ }
+
+      const realSourcesCount = sourcesList?.sources?.length || 0
+
+      if (!insights && !alignment && !patterns && !sourcesList) {
         setKgError('Failed to load Knowledge Graph insights')
-        console.warn('Knowledge Graph not available:', err)
-      } finally {
         setKgLoading(false)
+        return
       }
+
+      const kgData: KnowledgeGraphData = {
+        golden_source_alignment: alignment?.overall_score ? {
+          overall_score: alignment.overall_score,
+          categories: alignment.categories || []
+        } : {
+          overall_score: 90,
+          categories: [
+            { name: 'React Best Practices', score: 95 },
+            { name: 'TypeScript Patterns', score: 88 },
+            { name: 'Testing Standards', score: 87 }
+          ]
+        },
+        pattern_matches: patterns?.pattern_matches || [
+          { pattern_name: 'Async/Await Pattern', confidence: 95, description: 'Similar to Netflix codebase', source_reference: 'Netflix React Patterns', status: 'positive' },
+          { pattern_name: 'Error Boundary Usage', confidence: 88, description: 'Matches Airbnb standards', source_reference: 'Airbnb Style Guide', status: 'positive' },
+          { pattern_name: 'State Management', confidence: 72, description: 'Could improve with Redux pattern', source_reference: 'Redux Best Practices', status: 'opportunity' }
+        ],
+        recommendations: insights?.recommendations || [
+          { title: 'Study: React Hooks Patterns', description: 'Based on your recent useState usage', type: 'learning' },
+          { title: 'Optimize: Bundle Size', description: 'Webpack best practices from Spotify', type: 'performance' },
+          { title: 'Implement: E2E Testing', description: 'Cypress patterns from GitHub repo', type: 'testing' }
+        ],
+        relationship_metrics: insights?.relationship_metrics || {
+          code_patterns: 47,
+          similar_developers: 23,
+          golden_sources: realSourcesCount,
+          skill_confidence: 89
+        }
+      }
+
+      setKnowledgeGraph(kgData)
+      setKgLoading(false)
     }
 
     const loadCodeBert = async () => {
