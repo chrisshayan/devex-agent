@@ -1470,11 +1470,25 @@ async def get_knowledge_graph_insights(developer_id: str):
 
             # Relationship metrics
             golden_sources = await knowledge_graph.list_golden_sources()
+            # Compute skill confidence robustly from assessments if available
+            avg_conf = 0
+            if isinstance(skill_assessment, dict) and skill_assessment:
+                try:
+                    confs = []
+                    for v in skill_assessment.values():
+                        c = getattr(v, 'confidence', None) if not isinstance(v, dict) else v.get('confidence')
+                        if isinstance(c, (int, float)):
+                            confs.append(float(c))
+                    if confs:
+                        avg_conf = int((sum(confs) / len(confs)) * 100)
+                except Exception:
+                    avg_conf = 0
+
             relationship_metrics = {
                 "code_patterns": len(pattern_matches) if pattern_matches else 0,
                 "similar_developers": analytics.get("similar_developers", 0) if analytics else 0,
                 "golden_sources": len(golden_sources) if golden_sources else 0,
-                "skill_confidence": int(getattr(skill_assessment, 'overall_confidence', 0) * 100) if skill_assessment else 0,
+                "skill_confidence": avg_conf,
             }
         except Exception as e:
             logger.warning(f"⚠️ Analysis fallback path: {e}")
@@ -1494,6 +1508,36 @@ async def get_knowledge_graph_insights(developer_id: str):
                 "confidence": 1.0,
             }]
 
+        # 4) Add golden source alignment (for Morning Brief workflow) and coverage gap details
+        golden_alignment_score = 0.0
+        coverage_gaps = []
+        try:
+            sources = await knowledge_graph.list_golden_sources()
+            if sources:
+                # Try to derive alignment from source health if code analysis not available
+                scores = []
+                for s in sources:
+                    try:
+                        health = await knowledge_graph.get_source_health(s.id)
+                        status = health.get('status')
+                        if status in ('never_synced', 'stale', 'disabled'):
+                            gap_type = 'never_synced' if status == 'never_synced' else 'stale'
+                            coverage_gaps.append({
+                                'source_id': s.id,
+                                'name': getattr(s.config, 'name', getattr(s, 'name', s.id)) if not isinstance(s.config, dict) else s.config.get('name', s.id),
+                                'gap_type': gap_type,
+                                'suggestion': 'Click Sync Now to ingest content' if gap_type != 'disabled' else 'Enable the source and sync',
+                            })
+                        # health_score is 0..1
+                        hs = float(health.get('health_score', 0))
+                        scores.append(hs)
+                    except Exception:
+                        continue
+                if scores:
+                    golden_alignment_score = sum(scores) / len(scores)
+        except Exception:
+            pass
+
         return {
             "status": "success",
             "developer_id": developer_id,
@@ -1501,6 +1545,8 @@ async def get_knowledge_graph_insights(developer_id: str):
             "relationship_metrics": relationship_metrics,
             "analytics": analytics,
             "generated_at": datetime.now().isoformat(),
+            "golden_source_alignment": golden_alignment_score,  # ratio 0..1 for Morning Brief
+            "coverage_gaps": coverage_gaps,
         }
         
     except Exception as e:
@@ -1527,65 +1573,33 @@ async def get_golden_source_alignment(developer_id: str):
         overall_score = 0.0
         
         if sources:
-            # Analyze developer code for alignment
+            # Calculate alignment from source health and metadata only
             try:
-                code_analysis = await knowledge_graph.analyze_developer_code(
-                    developer_id=developer_id,
-                    project_path=".",  # Current project
-                    include_recent_changes=True
-                )
-                
-                # Extract alignment metrics from code analysis
-                if code_analysis:
-                    categories = [
-                        {"name": "React Best Practices", "score": int(code_analysis.quality_score * 100)},
-                        {"name": "TypeScript Patterns", "score": int(code_analysis.complexity_analysis.get('typescript_usage', 0.85) * 100)},
-                        {"name": "Testing Standards", "score": int(code_analysis.code_smells.get('test_coverage', 0.75) * 100)},
-                        {"name": "Security Practices", "score": int(code_analysis.pattern_matches.get('security_score', 0.88) * 100)},
-                        {"name": "Performance Optimization", "score": int(code_analysis.code_smells.get('performance_score', 0.82) * 100)}
+                scored_sources = []
+                for source in sources:
+                    health = await knowledge_graph.get_source_health(source.id)
+                    score = int(health.get('health_score', 0.8) * 100)
+                    # Get display name from config
+                    cfg = source.config if isinstance(source.config, dict) else source.config
+                    try:
+                        display_name = getattr(cfg, 'name', None) if not isinstance(cfg, dict) else cfg.get('name')
+                    except Exception:
+                        display_name = None
+                    if not display_name:
+                        display_name = f"{source.type.value}_{source.id[:6]}" if getattr(source, 'type', None) else source.id
+                    categories.append({"name": display_name, "score": score})
+                    scored_sources.append((display_name, score))
+                if scored_sources:
+                    overall_score = sum(s for _, s in scored_sources) / len(scored_sources)
+                    # Top matched sources by score
+                    top_matched_sources = [
+                        {"name": name, "alignment": s} for name, s in sorted(scored_sources, key=lambda x: x[1], reverse=True)[:3]
                     ]
-                    overall_score = code_analysis.quality_score * 100
-                    
-                    # Get top matching sources
-                    if hasattr(code_analysis, 'golden_source_matches'):
-                        top_matched_sources = [
-                            {"name": match.source_name, "alignment": int(match.similarity_score * 100)}
-                            for match in code_analysis.golden_source_matches[:3]
-                        ]
-                else:
-                    # Fallback calculation based on source health
-                    source_scores = []
-                    for source in sources[:5]:  # Top 5 sources
-                        health = await knowledge_graph.get_source_health(source.id)
-                        score = int(health.get('health_score', 0.8) * 100)
-                        source_scores.append(score)
-                        
-                        categories.append({
-                            "name": source.name.replace('_', ' ').title(),
-                            "score": score
-                        })
-                        
-                        if len(top_matched_sources) < 3:
-                            top_matched_sources.append({
-                                "name": source.name,
-                                "alignment": score
-                            })
-                    
-                    overall_score = sum(source_scores) / len(source_scores) if source_scores else 85
-                    
             except Exception as e:
-                logger.warning(f"⚠️ Could not analyze developer code: {e}")
-                # Use basic scoring
+                logger.warning(f"⚠️ Alignment computation fallback: {e}")
                 overall_score = 85
-                categories = [
-                    {"name": "Code Quality", "score": 85},
-                    {"name": "Best Practices", "score": 88},
-                    {"name": "Documentation", "score": 82}
-                ]
-                top_matched_sources = [
-                    {"name": source.name, "alignment": 85}
-                    for source in sources[:3]
-                ]
+                categories = []
+                top_matched_sources = []
         else:
             # No sources available
             overall_score = 0
@@ -1626,36 +1640,34 @@ async def get_pattern_matches(developer_id: str):
             logger.warning(f"⚠️ Could not get similar patterns: {e}")
             similar_patterns = None
         
-        # Return pattern data
+        # Build dynamic pattern matches from ML output when available
+        pattern_matches = []
+        try:
+            if isinstance(similar_patterns, list) and similar_patterns:
+                for p in similar_patterns[:5]:
+                    name = p.get("pattern_type") or p.get("pattern_name") or "Similar Code Pattern"
+                    conf_val = p.get("confidence", p.get("similarity_score", 0.7))
+                    try:
+                        # Normalize to 0-100
+                        confidence = int(conf_val if conf_val > 1 else conf_val * 100)
+                    except Exception:
+                        confidence = 70
+                    status = "positive" if confidence >= 85 else ("good" if confidence >= 75 else "opportunity")
+                    pattern_matches.append({
+                        "pattern_name": name,
+                        "confidence": confidence,
+                        "description": p.get("description", "Similar structure detected in your code"),
+                        "source_reference": p.get("source", "Reference pattern"),
+                        "status": status,
+                        "matched_files": p.get("matched_files", [])
+                    })
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to map ML patterns: {e}")
+
         return {
             "status": "success",
             "developer_id": developer_id,
-            "pattern_matches": [
-                {
-                    "pattern_name": "Async/Await Pattern",
-                    "confidence": 95,
-                    "description": "Similar to Netflix codebase",
-                    "source_reference": "Netflix React Patterns",
-                    "status": "positive",
-                    "matched_files": ["api.ts", "dashboard.tsx"]
-                },
-                {
-                    "pattern_name": "Error Boundary Usage", 
-                    "confidence": 88,
-                    "description": "Matches Airbnb standards",
-                    "source_reference": "Airbnb Style Guide",
-                    "status": "positive",
-                    "matched_files": ["components/ErrorBoundary.tsx"]
-                },
-                {
-                    "pattern_name": "State Management",
-                    "confidence": 72,
-                    "description": "Could improve with Redux pattern",
-                    "source_reference": "Redux Best Practices", 
-                    "status": "opportunity",
-                    "matched_files": ["Dashboard.tsx", "DeveloperAnalytics.tsx"]
-                }
-            ],
+            "pattern_matches": pattern_matches,
             "similar_patterns_found": len(similar_patterns) if similar_patterns else 0,
             "ml_analysis": similar_patterns,
             "generated_at": datetime.now().isoformat()
@@ -1821,64 +1833,26 @@ async def get_codebert_similarity(developer_id: str):
             logger.warning(f"⚠️ Could not analyze developer code: {e}")
             sample_code = None
         
-        # Use actual CodeBERT similarity analysis
+        # Use CodeBERT similarity via KG helper (robust path)
         try:
             if sample_code:
-                # Get golden sources for comparison
-                golden_sources = await knowledge_graph.list_golden_sources()
-                
-                if golden_sources:
-                    # Compare developer's code against each golden source
-                    for source in golden_sources[:10]:  # Limit to top 10 sources
-                        try:
-                            # Get code patterns from this golden source
-                            source_patterns = await knowledge_graph.get_source_patterns(source.get('id') or source.get('name'))
-                            
-                            if source_patterns:
-                                # Use CodeBERT to calculate similarity
-                                similarity_score = await knowledge_graph.calculate_code_similarity(
-                                    code1=sample_code,
-                                    code2=source_patterns.get('sample_code', ''),
-                                    use_codebert=True
-                                )
-                                
-                                if similarity_score and similarity_score > 0.3:  # Only include meaningful similarities
-                                    confidence = min(95, int(similarity_score * 100 + 10))  # Add confidence boost
-                                    
-                                    similarity_analysis.append({
-                                        "reference": source.get('name', 'Unknown Source'),
-                                        "similarity_score": int(similarity_score * 100),
-                                        "matched_patterns": source_patterns.get('common_patterns', [])[:3],
-                                        "confidence": confidence,
-                                        "source_type": source.get('type', 'repository'),
-                                        "last_updated": source.get('last_updated', '')
-                                    })
-                        except Exception as e:
-                            logger.warning(f"⚠️ Could not analyze similarity with source {source.get('name', 'unknown')}: {e}")
-                            continue
-                
-                # Try general pattern matching if no golden sources available
-                if not similarity_analysis:
-                    similar_patterns = await knowledge_graph.find_similar_code_patterns(
-                        query_code=sample_code[:200],  # Use first 200 chars
-                        developer_id=developer_id,
-                        threshold=0.5
-                    )
-                    
-                    if similar_patterns:
-                        # Convert pattern matches to similarity analysis
-                        for i, pattern in enumerate(similar_patterns[:5]):
-                            similarity_analysis.append({
-                                "reference": f"Pattern {i+1}: {pattern.get('pattern_type', 'Code Pattern')}",
-                                "similarity_score": int(pattern.get('confidence', 0.7) * 100),
-                                "matched_patterns": [pattern.get('description', 'Similar code structure')],
-                                "confidence": int(pattern.get('confidence', 0.7) * 100),
-                                "source_type": "pattern_match",
-                                "last_updated": datetime.now().isoformat()
-                            })
-                        
+                similar_patterns = await knowledge_graph.find_similar_code_patterns(
+                    query_code=sample_code[:400],
+                    developer_id=developer_id,
+                    threshold=0.5
+                )
+                if similar_patterns:
+                    for i, pattern in enumerate(similar_patterns[:5]):
+                        similarity_analysis.append({
+                            "reference": pattern.get('pattern_type') or pattern.get('source', f"Pattern {i+1}"),
+                            "similarity_score": int(pattern.get('similarity_score', pattern.get('confidence', 0.7)) * 100),
+                            "matched_patterns": [pattern.get('description', 'Similar code structure')],
+                            "confidence": int(pattern.get('confidence', 0.7) * 100),
+                            "source_type": pattern.get('source_type', 'pattern_match'),
+                            "last_updated": datetime.now().isoformat()
+                        })
         except Exception as e:
-            logger.warning(f"⚠️ Could not perform CodeBERT similarity analysis: {e}")
+            logger.warning(f"⚠️ Similarity analysis fallback: {e}")
         
         # Calculate overall metrics from real data
         if similarity_analysis:
