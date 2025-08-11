@@ -18,6 +18,8 @@ function App() {
         <Route path="/patterns/:developerId" element={<PatternHistory />} />
         <Route path="/codebert/:developerId" element={<PatternHistory />} />
         <Route path="/codebert/:developerId/history" element={<PatternHistory />} />
+        {/* Morning Brief route temporarily points to Dashboard (brief section is on the page) */}
+        <Route path="/brief/:developerId" element={<Dashboard />} />
       </Routes>
     </Layout>
   )

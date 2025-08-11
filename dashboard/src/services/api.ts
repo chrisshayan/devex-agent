@@ -2,6 +2,22 @@
 
 const API_BASE_URL = 'http://localhost:8000';
 
+// Simple in-memory cache for GET requests
+const __cache = new Map<string, { timestamp: number; data: any }>();
+
+async function cachedGet(endpoint: string, ttlMs = 15000) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const now = Date.now();
+  const key = `GET ${url}`;
+  const cached = __cache.get(key);
+  if (cached && now - cached.timestamp < ttlMs) {
+    return cached.data;
+  }
+  const response = await apiRequest(endpoint);
+  __cache.set(key, { timestamp: now, data: response });
+  return response;
+}
+
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -58,54 +74,54 @@ export async function fetchDeveloperAnalytics(developerId: string) {
 
 // Morning Brief
 export async function fetchMorningBrief(developerId: string) {
-  return await apiRequest(`/brief/morning/${developerId}`);
+  return await cachedGet(`/brief/morning/${developerId}`, 30000);
 }
 
 // Knowledge Graph APIs
 export async function fetchKnowledgeGraphInsights(developerId: string) {
-  return await apiRequest(`/api/v1/knowledge-graph/insights/${developerId}`);
+  return await cachedGet(`/api/v1/knowledge-graph/insights/${developerId}`, 30000);
 }
 
 export async function fetchGoldenSourceAlignment(developerId: string) {
-  return await apiRequest(`/api/v1/knowledge-graph/golden-sources/${developerId}`);
+  return await cachedGet(`/api/v1/knowledge-graph/golden-sources/${developerId}`, 60000);
 }
 
 export async function fetchPatternMatches(developerId: string) {
-  return await apiRequest(`/api/v1/knowledge-graph/patterns/${developerId}`);
+  return await cachedGet(`/api/v1/knowledge-graph/patterns/${developerId}`, 60000);
 }
 
 // CodeBERT APIs
 export async function fetchCodeBertAnalysis(developerId: string) {
-  return await apiRequest(`/api/v1/codebert/analysis/${developerId}`);
+  return await cachedGet(`/api/v1/codebert/analysis/${developerId}`, 30000);
 }
 
 export async function fetchCodeBertPatterns(developerId: string) {
-  return await apiRequest(`/api/v1/codebert/patterns/${developerId}`);
+  return await cachedGet(`/api/v1/codebert/patterns/${developerId}`, 30000);
 }
 
 export async function fetchCodeBertSimilarity(developerId: string) {
-  return await apiRequest(`/api/v1/codebert/similarity/${developerId}`);
+  return await cachedGet(`/api/v1/codebert/similarity/${developerId}`, 30000);
 }
 
 export async function fetchCodeBertPredictions(developerId: string) {
-  return await apiRequest(`/api/v1/codebert/predictions/${developerId}`);
+  return await cachedGet(`/api/v1/codebert/predictions/${developerId}`, 30000);
 }
 
 // NEW: Pattern History & Analytics APIs
 export async function fetchPatternHistory(developerId: string, timeframe: string = '3months') {
-  return await apiRequest(`/api/v1/analytics/pattern-history/${developerId}?timeframe=${timeframe}`);
+  return await cachedGet(`/api/v1/analytics/pattern-history/${developerId}?timeframe=${timeframe}`, 60000);
 }
 
 export async function fetchSkillProgression(developerId: string, timeframe: string = '3months') {
-  return await apiRequest(`/api/v1/analytics/skill-progression/${developerId}?timeframe=${timeframe}`);
+  return await cachedGet(`/api/v1/analytics/skill-progression/${developerId}?timeframe=${timeframe}`, 60000);
 }
 
 export async function fetchCoachingMetrics(developerId: string) {
-  return await apiRequest(`/api/v1/analytics/coaching-metrics/${developerId}`);
+  return await cachedGet(`/api/v1/analytics/coaching-metrics/${developerId}`, 60000);
 }
 
 export async function fetchGoldenSourcesList(developerId: string) {
-  return await apiRequest(`/api/v1/analytics/golden-sources-list/${developerId}`);
+  return await cachedGet(`/api/v1/analytics/golden-sources-list/${developerId}`, 60000);
 }
 
 // Golden Source management APIs
@@ -141,7 +157,7 @@ export async function fetchDeveloperDashboard(developerId: string) {
 }
 
 export async function fetchDeveloperSkillsTimeline(developerId: string, timeframe: string = '6months') {
-  return await apiRequest(`/api/v1/analytics/skill-progression/${developerId}?timeframe=${timeframe}`);
+  return await cachedGet(`/api/v1/analytics/skill-progression/${developerId}?timeframe=${timeframe}`, 60000);
 }
 
 export async function fetchDeveloperCodeQualityTrends(developerId: string, timeframe: string = '6months') {
