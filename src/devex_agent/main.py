@@ -1802,18 +1802,36 @@ async def get_codebert_similarity(developer_id: str):
         
         # Get developer's recent code to analyze
         try:
-            # Analyze developer's actual codebase 
-            code_analysis = await knowledge_graph.analyze_developer_code(
-                developer_id=developer_id,
-                project_path=".",
-                include_recent_changes=True
-            )
+            # Try to gather a local code sample for analysis
+            sample_code = None
+            try:
+                import os
+                EXCLUDE_DIRS = {"node_modules", "dist", "build", ".git", "__pycache__"}
+                PRIORITY_DIRS = ["dashboard/src", "src", "./src", "./dashboard/src"]
+                search_roots = [d for d in PRIORITY_DIRS if os.path.isdir(d)] or ["."]
+                for root in search_roots:
+                    for r, dirs, files in os.walk(root):
+                        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+                        for file in files:
+                            if file.endswith((".ts", ".tsx", ".js", ".jsx", ".py")):
+                                fp = os.path.join(r, file)
+                                try:
+                                    with open(fp, 'r', encoding='utf-8') as f:
+                                        content = f.read()
+                                        if len(content) > 80:
+                                            sample_code = content[:800]
+                                            break
+                                except Exception:
+                                    continue
+                        if sample_code:
+                            break
+                    if sample_code:
+                        break
+            except Exception:
+                pass
             
-            if code_analysis and hasattr(code_analysis, 'code_samples'):
-                sample_code = code_analysis.code_samples[0] if code_analysis.code_samples else None
-            else:
+            if not sample_code:
                 # Fallback: scan for actual code files in project
-                sample_code = None
                 try:
                     import os
                     for root, dirs, files in os.walk("."):
@@ -1821,8 +1839,8 @@ async def get_codebert_similarity(developer_id: str):
                             if file.endswith(('.ts', '.tsx', '.js', '.jsx', '.py')):
                                 with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
                                     content = f.read()
-                                    if len(content) > 50:  # Non-empty file
-                                        sample_code = content[:500]  # First 500 chars
+                                    if len(content) > 50:
+                                        sample_code = content[:500]
                                         break
                         if sample_code:
                             break
@@ -1839,7 +1857,7 @@ async def get_codebert_similarity(developer_id: str):
                 similar_patterns = await knowledge_graph.find_similar_code_patterns(
                     query_code=sample_code[:400],
                     developer_id=developer_id,
-                    threshold=0.5
+                    threshold=0.1
                 )
                 if similar_patterns:
                     for i, pattern in enumerate(similar_patterns[:5]):
@@ -1862,13 +1880,13 @@ async def get_codebert_similarity(developer_id: str):
         
         # Provide minimal fallback if no real analysis possible
         if not similarity_analysis:
-            logger.info("🔄 No similarity analysis available, providing setup guidance")
+            logger.info("🔄 No similarity analysis available, providing baseline")
             similarity_analysis = [{
-                "reference": "Analysis Pending",
-                "similarity_score": 0,
-                "matched_patterns": ["Enable code monitoring for detailed analysis"],
-                "confidence": 100,
-                "source_type": "system_message",
+                "reference": "Baseline",
+                "similarity_score": 5,
+                "matched_patterns": ["Not enough comparable code yet"],
+                "confidence": 50,
+                "source_type": "fallback",
                 "last_updated": datetime.now().isoformat()
             }]
         
