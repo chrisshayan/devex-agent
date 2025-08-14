@@ -56,11 +56,11 @@ RUN groupadd -g 1000 devex && \
 # Set working directory
 WORKDIR /app
 
-# Copy virtual environment from builder stage
-COPY --from=builder /app/.venv /app/.venv
-
-# Copy application code
+# Copy application code first
 COPY --chown=devex:devex . .
+
+# Copy virtual environment from builder stage (after code to avoid being overwritten)
+COPY --from=builder /app/.venv /app/.venv
 
 # Create necessary directories
 RUN mkdir -p /app/data/vector_store /app/logs /app/config && \
@@ -87,8 +87,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Switch to non-root user
 USER devex
 
-# Default command
-CMD ["python", "-m", "uvicorn", "devex_agent.main:app", \
+# Default command (use venv Python explicitly)
+CMD ["/app/.venv/bin/python", "-m", "uvicorn", "devex_agent.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--workers", "4", \

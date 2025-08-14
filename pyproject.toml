@@ -59,3 +59,14 @@ dev-dependencies = [
     "pytest>=7.4.3",
     "pytest-asyncio>=0.21.1",
 ]
+
+# Explicit Hatch build config so the wheel includes the src/devex_agent package
+[tool.hatch.build.targets.wheel]
+packages = ["src/devex_agent"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/devex_agent",
+    "README.md",
+    "pyproject.toml"
+]

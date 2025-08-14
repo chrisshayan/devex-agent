@@ -16,7 +16,6 @@ An intelligent ambient agent that proactively analyzes code and provides morning
 [📖 Documentation](#-documentation) •
 [🎯 Features](#-features) •
 [🏗️ Architecture](#%EF%B8%8F-architecture) •
-[🤝 Contributing](#-contributing)
 
 </div>
 
